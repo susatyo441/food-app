@@ -1,34 +1,28 @@
 'use strict';
 
+/** @type {import('sequelize-cli').Migration} */
 module.exports = {
   up: async (queryInterface, Sequelize) => {
-    await queryInterface.createTable('users', {
+    await queryInterface.createTable('post_media', {
       id: {
         allowNull: false,
         autoIncrement: true,
         primaryKey: true,
         type: Sequelize.INTEGER,
       },
-      name: {
+      post_id: {
         allowNull: false,
-        type: Sequelize.STRING,
+        type: Sequelize.INTEGER,
+        references: {
+          model: 'posts',
+          key: 'id',
+        },
+        onUpdate: 'CASCADE',
+        onDelete: 'CASCADE',
       },
-      email: {
+      url: {
         allowNull: false,
-        unique: true,
-        type: Sequelize.STRING,
-      },
-      password: {
-        allowNull: false,
-        type: Sequelize.STRING,
-      },
-      gender: {
-        allowNull: false,
-        type: Sequelize.ENUM('l', 'p'),
-      },
-      deleted_at: {
-        allowNull: true,
-        type: Sequelize.DATE,
+        type: Sequelize.TEXT,
       },
       createdAt: {
         allowNull: false,
@@ -40,8 +34,7 @@ module.exports = {
       },
     });
   },
-
   down: async (queryInterface) => {
-    await queryInterface.dropTable('users');
+    await queryInterface.dropTable('post_media');
   },
 };
