@@ -13,19 +13,22 @@ export class Address {
   @JoinColumn({ name: 'user_id' })
   user: User;
 
-  @Column({ nullable: false, type: 'string' })
+  @Column({ nullable: false})
+  provinsi: string;
+
+  @Column({ nullable: false})
   kota: string;
 
-  @Column({ nullable: false, type: 'string' })
+  @Column({ nullable: false})
   kecamatan: string;
 
-  @Column({ nullable: false, type: 'string' })
+  @Column({ nullable: false})
   kode_pos: string;
 
-  @Column({ nullable: false, type: 'text' })
+  @Column({ nullable: false})
   alamat: string;
 
-  @Column({ nullable: false, type: 'string' })
+  @Column({ nullable: true})
   coordinate: string;
 
   @CreateDateColumn({ type: 'timestamp', default: () => 'CURRENT_TIMESTAMP' })

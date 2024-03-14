@@ -14,6 +14,7 @@ import { join } from 'path';  // Import join dari modul 'path'
       database: 'food-app',
       entities: [join(__dirname, '../entities/*.entity{.ts,.js}')],  // Sesuaikan dengan path dan ekstensi file entitas Anda
       synchronize: true,
+      autoLoadEntities: true,
     }),
   ],
 })

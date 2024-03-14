@@ -53,16 +53,16 @@ export class AuthService {
     const user_data = await this.userService.findByEmail(loginData.email);
     // Check if user exists and verify the password
     if (user && (await bcrypt.compare(loginData.password, user.password))) {
+      const payload = { email:user_data.email};
       // Generate token after successful login
-      const token = this.generateToken(user.email);
-      return { user: user_data, token };
+      return { user: user_data, token:await this.jwtService.signAsync(payload) };
     } else {
       throw new UnauthorizedException('Invalid credentials');
     }
   }
 
   private generateToken(email: string): string {
-    const payload = { email };
+    const payload = { email:email };
     return this.jwtService.sign(payload);
   }
 }

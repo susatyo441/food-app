@@ -20,6 +20,10 @@ module.exports = {
         onUpdate: 'CASCADE',
         onDelete: 'CASCADE',
       },
+      provinsi: {
+        allowNull: false,
+        type: Sequelize.STRING,
+      },
       kota: {
         allowNull: false,
         type: Sequelize.STRING,
