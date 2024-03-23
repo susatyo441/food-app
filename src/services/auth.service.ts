@@ -34,7 +34,7 @@ export class AuthService {
       });
 
       // Generate token after registration
-      const token = this.generateToken(newUser.email);
+      const token = await this.generateToken(newUser.email);
 
       // Return user information and token
       return { user: newUser, token };
@@ -53,16 +53,14 @@ export class AuthService {
     const user_data = await this.userService.findByEmail(loginData.email);
     // Check if user exists and verify the password
     if (user && (await bcrypt.compare(loginData.password, user.password))) {
-      const payload = { email:user_data.email};
-      // Generate token after successful login
-      return { user: user_data, token:await this.jwtService.signAsync(payload) };
+      return { user: user_data, token:await this.generateToken(user_data.email) };
     } else {
       throw new UnauthorizedException('Invalid credentials');
     }
   }
 
-  private generateToken(email: string): string {
+  private async generateToken(email: string): Promise<string> {
     const payload = { email:email };
-    return this.jwtService.sign(payload);
+    return await this.jwtService.signAsync(payload);
   }
 }

@@ -37,6 +37,7 @@ export class User {
   gender: string;
 
   @Column({ default: false })
+  @Exclude({ toPlainOnly: true })
   isDeleted: boolean;
 
   @Column({ default: () => 'CURRENT_TIMESTAMP' }) // Setelah update, kolom ini akan diisi dengan waktu saat itu

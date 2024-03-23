@@ -17,26 +17,26 @@ export class UserService {
   }
 
   async findById(id: number): Promise<User | null> {
-    return this.userRepository.findOneBy({id});
+    return this.userRepository.findOneByOrFail({ id });
   }
 
   async findByEmail(email: string): Promise<User | null> {
-    const user = await this.userRepository.findOne({ where: {
-      email: email,
-  }, });
- 
+    const user = await this.userRepository.findOne({
+      where: {
+        email: email,
+      },
+    });
+
     return user;
   }
   // src/services/user.service.ts
 
   async findByEmailWithPassword(email: string): Promise<User | null> {
-    return this.userRepository.findOne({
+    return this.userRepository.findOneOrFail({
       where: { email },
       select: ['password'], // Hanya menyertakan kolom password
     });
   }
-
-
 
   async create(user: Partial<User>): Promise<User> {
     const newUser = this.userRepository.create(user);

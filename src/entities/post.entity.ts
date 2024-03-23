@@ -1,6 +1,15 @@
 // src/models/post.entity.ts
 
-import { Entity, Column, PrimaryGeneratedColumn, CreateDateColumn, UpdateDateColumn, ManyToOne, JoinColumn, OneToMany } from 'typeorm';
+import {
+  Entity,
+  Column,
+  PrimaryGeneratedColumn,
+  CreateDateColumn,
+  UpdateDateColumn,
+  ManyToOne,
+  JoinColumn,
+  OneToMany,
+} from 'typeorm';
 import { User } from './user.entity';
 import { CategoryPost } from './category-post.entity';
 import { Variant } from './variant.entity';
@@ -19,32 +28,43 @@ export class Post {
   @Column({ nullable: false, type: 'text', comment: 'Content of the post' })
   body: string;
 
-  @ManyToOne(() => User, user => user.posts, { nullable: false, onDelete: 'CASCADE', onUpdate: 'CASCADE' })
+  @ManyToOne(() => User, (user) => user.posts, {
+    nullable: false,
+    onDelete: 'CASCADE',
+    onUpdate: 'CASCADE',
+  })
   @JoinColumn({ name: 'user_id' })
   user: User;
 
-  @ManyToOne(() => Address, address => address.posts, { onDelete: 'CASCADE', onUpdate: 'CASCADE' })
+  @ManyToOne(() => Address, (address) => address.posts, {
+    onDelete: 'CASCADE',
+    onUpdate: 'CASCADE',
+  })
   @JoinColumn({ name: 'address_id' })
   address: Address;
 
-  @Column({ nullable: false })
+  @Column({ nullable: false, default: 1 })
   status: number;
 
   @CreateDateColumn({ type: 'timestamp', default: () => 'CURRENT_TIMESTAMP' })
   createdAt: Date;
 
-  @UpdateDateColumn({ type: 'timestamp', default: () => 'CURRENT_TIMESTAMP', onUpdate: 'CURRENT_TIMESTAMP' })
+  @UpdateDateColumn({
+    type: 'timestamp',
+    default: () => 'CURRENT_TIMESTAMP',
+    onUpdate: 'CURRENT_TIMESTAMP',
+  })
   updatedAt: Date;
 
-  @OneToMany(() => CategoryPost, categoryPosts => categoryPosts.post)
+  @OneToMany(() => CategoryPost, (categoryPosts) => categoryPosts.post)
   categoryPosts: CategoryPost[];
 
-  @OneToMany(() => Variant, variants => variants.post)
-  variants: CategoryPost[];
+  @OneToMany(() => Variant, (variants) => variants.post)
+  variants: Variant[];
 
-  @OneToMany(() => Transaction, transaction => transaction.post)
+  @OneToMany(() => Transaction, (transaction) => transaction.post)
   transactions: Transaction[];
 
-  @OneToMany(() => PostMedia, postMedia => postMedia.post)
+  @OneToMany(() => PostMedia, (postMedia) => postMedia.post)
   media: PostMedia[];
 }
