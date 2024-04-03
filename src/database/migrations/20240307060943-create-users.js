@@ -38,6 +38,12 @@ module.exports = {
         allowNull: false,
         type: Sequelize.DATE,
       },
+      isDeleted: {
+        // Tambahkan default value untuk isDeleted dan ubah allowNull menjadi true
+        allowNull: false,
+        defaultValue: false,
+        type: Sequelize.BOOLEAN,
+      },
     });
   },
 
