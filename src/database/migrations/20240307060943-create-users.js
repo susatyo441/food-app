@@ -1,5 +1,4 @@
 'use strict';
-
 module.exports = {
   up: async (queryInterface, Sequelize) => {
     await queryInterface.createTable('users', {
@@ -10,43 +9,40 @@ module.exports = {
         type: Sequelize.INTEGER,
       },
       name: {
-        allowNull: false,
         type: Sequelize.STRING,
+        allowNull: false,
       },
       email: {
-        allowNull: false,
-        unique: true,
         type: Sequelize.STRING,
+        allowNull: false,
       },
       password: {
-        allowNull: false,
         type: Sequelize.STRING,
+        allowNull: false,
       },
       gender: {
-        allowNull: false,
         type: Sequelize.ENUM('l', 'p'),
-      },
-      deleted_at: {
-        allowNull: true,
-        type: Sequelize.DATE,
-      },
-      createdAt: {
         allowNull: false,
-        type: Sequelize.DATE,
       },
-      updatedAt: {
-        allowNull: false,
-        type: Sequelize.DATE,
-      },
-      isDeleted: {
-        // Tambahkan default value untuk isDeleted dan ubah allowNull menjadi true
+      is_deleted: {
+        type: Sequelize.BOOLEAN,
         allowNull: false,
         defaultValue: false,
-        type: Sequelize.BOOLEAN,
+      },
+      created_at: {
+        allowNull: false,
+        type: Sequelize.DATE,
+        defaultValue: Sequelize.literal('CURRENT_TIMESTAMP'),
+      },
+      updated_at: {
+        allowNull: false,
+        type: Sequelize.DATE,
+        defaultValue: Sequelize.literal(
+          'CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP',
+        ),
       },
     });
   },
-
   down: async (queryInterface) => {
     await queryInterface.dropTable('users');
   },

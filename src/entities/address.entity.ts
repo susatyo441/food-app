@@ -1,42 +1,57 @@
 // src/models/address.entity.ts
 
-import { Entity, Column, PrimaryGeneratedColumn, CreateDateColumn, UpdateDateColumn, ManyToOne, JoinColumn, OneToMany } from 'typeorm';
+import {
+  Entity,
+  Column,
+  PrimaryGeneratedColumn,
+  CreateDateColumn,
+  UpdateDateColumn,
+  ManyToOne,
+  JoinColumn,
+  OneToMany,
+} from 'typeorm';
 import { Post } from './post.entity';
 import { User } from './user.entity';
 
-@Entity('address')
+@Entity('addresses')
 export class Address {
   @PrimaryGeneratedColumn()
   id: number;
 
-  @ManyToOne(() => User, user => user.addresses, { onDelete: 'CASCADE', onUpdate: 'CASCADE' })
+  @ManyToOne(() => User, (user) => user.addresses, {
+    onDelete: 'CASCADE',
+    onUpdate: 'CASCADE',
+  })
   @JoinColumn({ name: 'user_id' })
   user: User;
 
-  @Column({ nullable: false})
+  @Column({ nullable: false })
   provinsi: string;
 
-  @Column({ nullable: false})
+  @Column({ nullable: false })
   kota: string;
 
-  @Column({ nullable: false})
+  @Column({ nullable: false })
   kecamatan: string;
 
-  @Column({ nullable: false})
+  @Column({ nullable: false })
   kode_pos: string;
 
-  @Column({ nullable: false})
+  @Column({ nullable: false })
   alamat: string;
 
-  @Column({ nullable: true})
+  @Column({ nullable: true })
   coordinate: string;
 
-  @CreateDateColumn({ type: 'timestamp', default: () => 'CURRENT_TIMESTAMP' })
+  @CreateDateColumn({ default: () => 'CURRENT_TIMESTAMP' })
   createdAt: Date;
 
-  @UpdateDateColumn({ type: 'timestamp', default: () => 'CURRENT_TIMESTAMP', onUpdate: 'CURRENT_TIMESTAMP' })
+  @UpdateDateColumn({
+    default: () => 'CURRENT_TIMESTAMP',
+    onUpdate: 'CURRENT_TIMESTAMP',
+  })
   updatedAt: Date;
 
-  @OneToMany(() => Post, posts => posts.address)
+  @OneToMany(() => Post, (posts) => posts.address)
   posts: Post[];
 }

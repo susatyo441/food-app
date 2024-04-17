@@ -1,5 +1,13 @@
 // chat.entity.ts
-import { Entity, Column, PrimaryGeneratedColumn, ManyToOne, JoinColumn } from 'typeorm';
+import {
+  Entity,
+  Column,
+  PrimaryGeneratedColumn,
+  ManyToOne,
+  JoinColumn,
+  CreateDateColumn,
+  UpdateDateColumn,
+} from 'typeorm';
 import { Conversation } from './conversation.entity';
 
 @Entity('chats')
@@ -7,7 +15,10 @@ export class Chat {
   @PrimaryGeneratedColumn()
   id: number;
 
-  @ManyToOne(() => Conversation, conversation => conversation.chats, { onDelete: 'CASCADE', onUpdate: 'CASCADE' })
+  @ManyToOne(() => Conversation, (conversation) => conversation.chats, {
+    onDelete: 'CASCADE',
+    onUpdate: 'CASCADE',
+  })
   @JoinColumn({ name: 'conversation_id' })
   conversation: Conversation;
 
@@ -20,9 +31,18 @@ export class Chat {
   @Column({ nullable: false, type: 'datetime' })
   readAt: Date;
 
-  @Column({ nullable: false, type: 'datetime' })
+  @CreateDateColumn({
+    nullable: false,
+    type: 'datetime',
+    default: () => 'CURRENT_TIMESTAMP',
+  })
   createdAt: Date;
 
-  @Column({ nullable: false, type: 'datetime' })
+  @UpdateDateColumn({
+    nullable: false,
+    type: 'datetime',
+    default: () => 'CURRENT_TIMESTAMP',
+    onUpdate: 'CURRENT_TIMESTAMP',
+  })
   updatedAt: Date;
 }

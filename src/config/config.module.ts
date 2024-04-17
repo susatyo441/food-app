@@ -1,7 +1,7 @@
 // src/config/config.module.ts
 import { Module } from '@nestjs/common';
 import { TypeOrmModule } from '@nestjs/typeorm';
-import { join } from 'path';  // Import join dari modul 'path'
+import { join } from 'path'; // Import join dari modul 'path'
 
 @Module({
   imports: [
@@ -12,7 +12,7 @@ import { join } from 'path';  // Import join dari modul 'path'
       username: 'root',
       password: null,
       database: 'food-app',
-      entities: [join(__dirname, '../entities/*.entity{.ts,.js}')],  // Sesuaikan dengan path dan ekstensi file entitas Anda
+      entities: [join(__dirname, '../entities/*.entity{.ts,.js}')], // Sesuaikan dengan path dan ekstensi file entitas Anda
       synchronize: true,
       autoLoadEntities: true,
     }),

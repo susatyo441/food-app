@@ -1,9 +1,7 @@
 'use strict';
-
-/** @type {import('sequelize-cli').Migration} */
 module.exports = {
   up: async (queryInterface, Sequelize) => {
-    await queryInterface.createTable('variant', {
+    await queryInterface.createTable('variants', {
       id: {
         allowNull: false,
         autoIncrement: true,
@@ -11,42 +9,46 @@ module.exports = {
         type: Sequelize.INTEGER,
       },
       post_id: {
-        allowNull: false,
         type: Sequelize.INTEGER,
+        allowNull: false,
+        onDelete: 'CASCADE',
+        onUpdate: 'CASCADE',
         references: {
           model: 'posts',
           key: 'id',
         },
-        onUpdate: 'CASCADE',
-        onDelete: 'CASCADE',
       },
       name: {
-        allowNull: false,
         type: Sequelize.STRING,
+        allowNull: false,
       },
       stok: {
-        allowNull: false,
         type: Sequelize.INTEGER,
+        allowNull: false,
       },
-      startAt: {
-        allowNull: true,
+      start_at: {
         type: Sequelize.DATE,
-      },
-      expiredAt: {
         allowNull: true,
-        type: Sequelize.DATE,
       },
-      createdAt: {
+      expired_at: {
+        type: Sequelize.DATE,
+        allowNull: true,
+      },
+      created_at: {
         allowNull: false,
         type: Sequelize.DATE,
+        defaultValue: Sequelize.literal('CURRENT_TIMESTAMP'),
       },
-      updatedAt: {
+      updated_at: {
         allowNull: false,
         type: Sequelize.DATE,
+        defaultValue: Sequelize.literal(
+          'CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP',
+        ),
       },
     });
   },
   down: async (queryInterface) => {
-    await queryInterface.dropTable('variant');
+    await queryInterface.dropTable('variants');
   },
 };

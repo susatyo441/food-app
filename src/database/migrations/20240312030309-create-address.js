@@ -1,9 +1,7 @@
 'use strict';
-
-/** @type {import('sequelize-cli').Migration} */
 module.exports = {
   up: async (queryInterface, Sequelize) => {
-    await queryInterface.createTable('address', {
+    await queryInterface.createTable('addresses', {
       id: {
         allowNull: false,
         autoIncrement: true,
@@ -11,50 +9,54 @@ module.exports = {
         type: Sequelize.INTEGER,
       },
       user_id: {
-        allowNull: true,
         type: Sequelize.INTEGER,
+        allowNull: false,
+        onDelete: 'CASCADE',
+        onUpdate: 'CASCADE',
         references: {
           model: 'users',
           key: 'id',
         },
-        onUpdate: 'CASCADE',
-        onDelete: 'CASCADE',
       },
       provinsi: {
-        allowNull: false,
         type: Sequelize.STRING,
+        allowNull: false,
       },
       kota: {
-        allowNull: false,
         type: Sequelize.STRING,
+        allowNull: false,
       },
       kecamatan: {
-        allowNull: false,
         type: Sequelize.STRING,
+        allowNull: false,
       },
       kode_pos: {
-        allowNull: false,
         type: Sequelize.STRING,
+        allowNull: false,
       },
       alamat: {
+        type: Sequelize.STRING,
         allowNull: false,
-        type: Sequelize.TEXT,
       },
       coordinate: {
-        allowNull: false,
         type: Sequelize.STRING,
+        allowNull: true,
       },
       createdAt: {
         allowNull: false,
         type: Sequelize.DATE,
+        defaultValue: Sequelize.literal('CURRENT_TIMESTAMP'),
       },
       updatedAt: {
         allowNull: false,
         type: Sequelize.DATE,
+        defaultValue: Sequelize.literal(
+          'CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP',
+        ),
       },
     });
   },
   down: async (queryInterface) => {
-    await queryInterface.dropTable('address');
+    await queryInterface.dropTable('addresses');
   },
 };
