@@ -11,10 +11,11 @@ export class Category {
   @Column({ nullable: false })
   name: string;
 
-  @Column({ default: () => 'CURRENT_TIMESTAMP' })
+  @Column({ type: 'timestamp', default: () => 'CURRENT_TIMESTAMP' })
   createdAt: Date;
 
   @Column({
+    type: 'timestamp',
     default: () => 'CURRENT_TIMESTAMP',
     onUpdate: 'CURRENT_TIMESTAMP',
   })

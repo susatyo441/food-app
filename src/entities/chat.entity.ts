@@ -30,12 +30,14 @@ export class Chat {
   readAt: Date;
 
   @Column({
+    type: 'timestamp',
     nullable: false,
     default: () => 'CURRENT_TIMESTAMP',
   })
   createdAt: Date;
 
   @Column({
+    type: 'timestamp',
     nullable: false,
     default: () => 'CURRENT_TIMESTAMP',
     onUpdate: 'CURRENT_TIMESTAMP',

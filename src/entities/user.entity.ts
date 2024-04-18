@@ -9,11 +9,11 @@ import { Transaction } from './transactions.entity';
 import { Address } from './address.entity';
 
 export enum Gender {
-  l = "l",
-  p = "p",
+  l = 'l',
+  p = 'p',
 }
 
-@Entity("users")
+@Entity('users')
 export class User {
   @PrimaryGeneratedColumn()
   id: number;
@@ -31,7 +31,7 @@ export class User {
   password: string;
 
   @Column({
-    type: "enum",
+    type: 'enum',
     enum: Gender,
   })
   gender: string;
@@ -40,28 +40,31 @@ export class User {
   @Exclude({ toPlainOnly: true })
   isDeleted: boolean;
 
-  @Column({ default: () => 'CURRENT_TIMESTAMP' }) // Setelah update, kolom ini akan diisi dengan waktu saat itu
+  @Column({ type: 'timestamp', default: () => 'CURRENT_TIMESTAMP' }) // Setelah update, kolom ini akan diisi dengan waktu saat itu
   createdAt: Date;
 
-  @Column({ default: () => 'CURRENT_TIMESTAMP', onUpdate: 'CURRENT_TIMESTAMP' }) // Setelah update, kolom ini akan diisi dengan waktu saat itu
+  @Column({
+    type: 'timestamp',
+    default: () => 'CURRENT_TIMESTAMP',
+    onUpdate: 'CURRENT_TIMESTAMP',
+  }) // Setelah update, kolom ini akan diisi dengan waktu saat itu
   updatedAt: Date;
-  
 
-  @OneToMany(() => Conversation, conversation => conversation.userDonor)
+  @OneToMany(() => Conversation, (conversation) => conversation.userDonor)
   donorConversations: Conversation[];
 
-  @OneToMany(() => Post, posts => posts.user)
+  @OneToMany(() => Post, (posts) => posts.user)
   posts: Post[];
 
-  @OneToMany(() => Conversation, conversation => conversation.userRecipient)
+  @OneToMany(() => Conversation, (conversation) => conversation.userRecipient)
   recipientConversations: Conversation[];
 
-  @OneToMany(() => Transaction, transaction => transaction.userDonor)
+  @OneToMany(() => Transaction, (transaction) => transaction.userDonor)
   transactionsAsDonor: Transaction[];
 
-  @OneToMany(() => Transaction, transaction => transaction.userRecipient)
+  @OneToMany(() => Transaction, (transaction) => transaction.userRecipient)
   transactionsAsRecipient: Transaction[];
 
-  @OneToMany(() => Address, address => address.user)
+  @OneToMany(() => Address, (address) => address.user)
   addresses: Address[];
 }

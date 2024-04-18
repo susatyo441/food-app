@@ -44,10 +44,11 @@ export class Post {
   @Column({ nullable: false, default: 1 })
   status: number;
 
-  @Column({ default: () => 'CURRENT_TIMESTAMP' })
+  @Column({ type: 'timestamp', default: () => 'CURRENT_TIMESTAMP' })
   createdAt: Date;
 
   @Column({
+    type: 'timestamp',
     default: () => 'CURRENT_TIMESTAMP',
     onUpdate: 'CURRENT_TIMESTAMP',
   })
