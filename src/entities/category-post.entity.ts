@@ -3,10 +3,9 @@
 import {
   Entity,
   PrimaryGeneratedColumn,
-  CreateDateColumn,
-  UpdateDateColumn,
   ManyToOne,
   JoinColumn,
+  Column,
 } from 'typeorm';
 import { Category } from './category.entity';
 import { Post } from './post.entity';
@@ -30,10 +29,10 @@ export class CategoryPost {
   @JoinColumn({ name: 'post_id' })
   post: Post;
 
-  @CreateDateColumn({ default: () => 'CURRENT_TIMESTAMP' })
+  @Column({ default: () => 'CURRENT_TIMESTAMP' })
   createdAt: Date;
 
-  @UpdateDateColumn({
+  @Column({
     default: () => 'CURRENT_TIMESTAMP',
     onUpdate: 'CURRENT_TIMESTAMP',
   })

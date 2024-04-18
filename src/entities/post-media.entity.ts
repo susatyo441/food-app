@@ -5,8 +5,6 @@ import {
   PrimaryGeneratedColumn,
   ManyToOne,
   JoinColumn,
-  UpdateDateColumn,
-  CreateDateColumn,
 } from 'typeorm';
 import { Post } from './post.entity';
 
@@ -25,13 +23,13 @@ export class PostMedia {
   @Column({ nullable: false, type: 'text' })
   url: string;
 
-  @CreateDateColumn({
+  @Column({
     nullable: false,
     default: () => 'CURRENT_TIMESTAMP',
   })
   createdAt: Date;
 
-  @UpdateDateColumn({
+  @Column({
     nullable: false,
     default: () => 'CURRENT_TIMESTAMP',
     onUpdate: 'CURRENT_TIMESTAMP',

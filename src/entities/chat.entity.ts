@@ -5,8 +5,6 @@ import {
   PrimaryGeneratedColumn,
   ManyToOne,
   JoinColumn,
-  CreateDateColumn,
-  UpdateDateColumn,
 } from 'typeorm';
 import { Conversation } from './conversation.entity';
 
@@ -31,13 +29,13 @@ export class Chat {
   @Column({ nullable: false, type: 'datetime' })
   readAt: Date;
 
-  @CreateDateColumn({
+  @Column({
     nullable: false,
     default: () => 'CURRENT_TIMESTAMP',
   })
   createdAt: Date;
 
-  @UpdateDateColumn({
+  @Column({
     nullable: false,
     default: () => 'CURRENT_TIMESTAMP',
     onUpdate: 'CURRENT_TIMESTAMP',

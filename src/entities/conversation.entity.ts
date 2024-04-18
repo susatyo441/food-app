@@ -6,8 +6,7 @@ import {
   ManyToOne,
   JoinColumn,
   OneToMany,
-  UpdateDateColumn,
-  CreateDateColumn,
+  Column,
 } from 'typeorm';
 import { User } from './user.entity';
 import { Chat } from './chat.entity';
@@ -25,10 +24,10 @@ export class Conversation {
   @JoinColumn({ name: 'user_id_recipient' })
   userRecipient: User;
 
-  @CreateDateColumn({ default: () => 'CURRENT_TIMESTAMP' })
+  @Column({ default: () => 'CURRENT_TIMESTAMP' })
   createdAt: Date;
 
-  @UpdateDateColumn({
+  @Column({
     default: () => 'CURRENT_TIMESTAMP',
     onUpdate: 'CURRENT_TIMESTAMP',
   })
