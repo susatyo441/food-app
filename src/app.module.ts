@@ -2,7 +2,7 @@
 
 import { Module } from '@nestjs/common';
 import { JwtModule } from '@nestjs/jwt';
-import { ConfigModule } from './config/config.module';
+
 import { UserService } from './services/user.service';
 import { UserController } from './controllers/user.controller';
 import { AuthController } from './controllers/auth.controller'; // Import AuthController
@@ -25,6 +25,8 @@ import { postProviders } from './providers/post.provider';
 import { HttpModule } from '@nestjs/axios';
 import { CategoryService } from './services/category.service';
 import { MediaController } from './controllers/media.controller';
+import { ConfigModule, ConfigService } from '@nestjs/config';
+import typeorm from './config/typeorm';
 
 @Module({
   imports: [
@@ -37,7 +39,15 @@ import { MediaController } from './controllers/media.controller';
       PostMedia,
       Variant,
     ]),
-    ConfigModule,
+    ConfigModule.forRoot({
+      isGlobal: true,
+      load: [typeorm],
+    }),
+    TypeOrmModule.forRootAsync({
+      inject: [ConfigService],
+      useFactory: async (configService: ConfigService) =>
+        configService.get('typeorm'),
+    }), // Menghapus tanda koma yang tidak semestinya di sini
     JwtModule.register({
       global: true,
       secret: 'AEA9448136237662FAC22EE5212C8',
@@ -57,14 +67,14 @@ import { MediaController } from './controllers/media.controller';
     PostService,
     CategoryService,
     ...postProviders,
-  ], // Tambahkan AuthService ke dalam providers
+  ],
   controllers: [
     UserController,
     AuthController,
     AddressController,
     PostController,
     MediaController,
-  ], // Tambahkan AuthController ke dalam controllers
+  ],
   exports: [TypeOrmModule],
 })
 export class AppModule {}
