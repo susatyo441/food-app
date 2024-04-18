@@ -35,7 +35,7 @@ $ npm install
 ## Migration
 
 ```bash
-$ npx sequelize-cli db:migrate
+$ npm run migration:run
 ```
 
 ## Running the app
