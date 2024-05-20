@@ -32,11 +32,16 @@
 $ npm install
 ```
 
-## Migration
+## Migration & Seeder
 
 ```bash
 $ npm run migration:run
+$ npm run seeder:run
 ```
+
+user seeder account
+email : admin@admin.com
+password : admin123
 
 ## Running the app
 

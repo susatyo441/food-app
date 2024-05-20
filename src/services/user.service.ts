@@ -1,6 +1,6 @@
 // src/services/user.service.ts
 
-import { Injectable } from '@nestjs/common';
+import { Injectable, NotFoundException } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
 import { Repository } from 'typeorm';
 import { User } from '../entities/user.entity';
@@ -22,24 +22,28 @@ export class UserService {
 
   async findByEmail(email: string): Promise<User | null> {
     const user = await this.userRepository.findOne({
-      where: {
-        email: email,
-      },
+      where: { email },
     });
 
     return user;
   }
-  // src/services/user.service.ts
 
   async findByEmailWithPassword(email: string): Promise<User | null> {
-    return this.userRepository.findOneOrFail({
+    const user = this.userRepository.findOne({
       where: { email },
-      select: ['password'], // Hanya menyertakan kolom password
+      select: ['password', 'token'], // Hanya menyertakan kolom password
     });
+    if (!user) {
+      throw new NotFoundException('User not found');
+    }
+    return user;
   }
 
   async create(user: Partial<User>): Promise<User> {
     const newUser = this.userRepository.create(user);
     return this.userRepository.save(newUser);
+  }
+  async updateToken(userId: number, token: string | null): Promise<void> {
+    await this.userRepository.update(userId, { token });
   }
 }

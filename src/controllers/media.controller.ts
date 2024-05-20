@@ -60,6 +60,51 @@ export class MediaController {
     return await this.saveFilesToStorage(images);
   }
 
+  @Post('upload-pfp')
+  @UseInterceptors(
+    FilesInterceptor('images', 1, {
+      storage: diskStorage({
+        destination: 'public/profile_picture',
+        filename: (req, file, cb) => {
+          const uniqueSuffix = uuidv4();
+          const fileExtension = mimeTypes.extension(file.mimetype); // Dapatkan ekstensi file berdasarkan tipe MIME
+          const randomFilename = `${uniqueSuffix}.${fileExtension}`;
+          cb(null, randomFilename);
+        },
+      }),
+      fileFilter: (req, file, cb) => {
+        // Filter file hanya untuk tipe MIME image
+        if (file.mimetype.startsWith('image/')) {
+          cb(null, true);
+        } else {
+          cb(
+            new BadRequestException(
+              'Invalid file type. Please upload only images.',
+            ),
+            false,
+          );
+        }
+      },
+    }),
+  )
+  async uploadFilePFP(
+    @UploadedFiles(
+      new ParseFilesPipe(
+        new ParseFilePipeBuilder()
+          .addFileTypeValidator({
+            fileType: /(jpg|jpeg|png)$/,
+          })
+          .addMaxSizeValidator({ maxSize: 5242880 })
+          .build({
+            errorHttpStatusCode: HttpStatus.UNPROCESSABLE_ENTITY,
+          }),
+      ),
+    )
+    images: Express.Multer.File[],
+  ) {
+    return await this.saveFilesToStorage(images);
+  }
+
   private async saveFilesToStorage(
     files: Array<Express.Multer.File>,
   ): Promise<string[]> {

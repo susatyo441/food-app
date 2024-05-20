@@ -36,6 +36,18 @@ export class User {
   })
   gender: string;
 
+  @Column({
+    nullable: false,
+    type: 'text',
+    default:
+      "'https://static.vecteezy.com/system/resources/previews/026/630/551/original/profile-icon-symbol-design-illustration-vector.jpg'",
+  })
+  profile_picture: string;
+
+  @Column({ nullable: false, default: null, select: false })
+  @Exclude({ toPlainOnly: true })
+  token: string;
+
   @Column({ default: false })
   @Exclude({ toPlainOnly: true })
   isDeleted: boolean;

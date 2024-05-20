@@ -47,7 +47,6 @@ export class PostController {
     @Body() createPostDto: CreatePostDto,
     @Req() req,
   ) {
-    console.log(createPostDto);
     const userId = req.user.id;
     const address = await this.addressService.findOne(
       createPostDto.address_id,

@@ -18,10 +18,17 @@ export class Users1713404869357 implements MigrationInterface {
           { name: 'password', type: 'varchar', isNullable: false },
           { name: 'gender', type: 'enum', enum: ['l', 'p'], isNullable: false },
           {
-            name: 'is_deleted',
-            type: 'boolean',
-            default: false,
+            name: 'profile_picture',
+            type: 'text',
             isNullable: false,
+            default:
+              "'https://static.vecteezy.com/system/resources/previews/026/630/551/original/profile-icon-symbol-design-illustration-vector.jpg'",
+          },
+          {
+            name: 'token',
+            type: 'text',
+            default: null,
+            isNullable: true,
           },
           {
             name: 'created_at',

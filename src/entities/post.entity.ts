@@ -41,8 +41,12 @@ export class Post {
   @JoinColumn({ name: 'address_id' })
   address: Address;
 
-  @Column({ nullable: false, default: 1 })
-  status: number;
+  @Column({
+    type: 'enum',
+    enum: ['visible', 'hidden'],
+    nullable: false,
+  })
+  status: 'visible' | 'hidden';
 
   @Column({ type: 'timestamp', default: () => 'CURRENT_TIMESTAMP' })
   createdAt: Date;

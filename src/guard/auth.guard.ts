@@ -1,10 +1,5 @@
-// src/middleware/auth.middleware.ts
-
-
 import { Request } from 'express';
-
 import { UserService } from 'src/services/user.service';
-
 import {
   CanActivate,
   ExecutionContext,
@@ -13,10 +8,12 @@ import {
 } from '@nestjs/common';
 import { JwtService } from '@nestjs/jwt';
 
-
 @Injectable()
 export class AuthGuard implements CanActivate {
-  constructor(private jwtService: JwtService, private readonly userService: UserService) {}
+  constructor(
+    private jwtService: JwtService,
+    private readonly userService: UserService,
+  ) {}
 
   async canActivate(context: ExecutionContext): Promise<boolean> {
     const request = context.switchToHttp().getRequest();
@@ -25,15 +22,16 @@ export class AuthGuard implements CanActivate {
       throw new UnauthorizedException();
     }
     try {
-      const {email} = await this.jwtService.verifyAsync(
-        token,
-        {
-          secret: "AEA9448136237662FAC22EE5212C8"
-        }
-      );
-      // 💡 We're assigning the payload to the request object here
-      // so that we can access it in our route handlers
-      request['user'] = await this.userService.findByEmail(email);
+      const { email } = await this.jwtService.verifyAsync(token, {
+        secret: 'AEA9448136237662FAC22EE5212C8',
+      });
+
+      const user = await this.userService.findByEmail(email);
+      const userToken = await this.userService.findByEmailWithPassword(email);
+      if (!user || userToken.token !== token) {
+        throw new UnauthorizedException();
+      }
+      request['user'] = user;
     } catch {
       throw new UnauthorizedException();
     }

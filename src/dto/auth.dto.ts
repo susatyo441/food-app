@@ -16,12 +16,11 @@ export class RegisterDto {
   @IsIn(['l', 'p'], { message: 'Invalid gender. Use "l" or "p".' })
   gender: string;
 }
-  
-  export class LoginDto {
+
+export class LoginDto {
   @IsEmail()
   email: string;
 
   @IsNotEmpty()
   password: string;
-  }
-  
+}

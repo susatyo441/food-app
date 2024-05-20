@@ -22,7 +22,13 @@ export class Posts1713405538207 implements MigrationInterface {
           { name: 'body', type: 'text', isNullable: false },
           { name: 'user_id', type: 'int', isNullable: false }, // Foreign key column
           { name: 'address_id', type: 'int', isNullable: true }, // Foreign key column
-          { name: 'status', type: 'int', default: 1, isNullable: false },
+          {
+            name: 'status',
+            type: 'enum',
+            enum: ['visible', 'hidden'],
+            isNullable: false,
+          },
+
           {
             name: 'createdAt',
             type: 'timestamp',
