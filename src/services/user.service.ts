@@ -17,7 +17,7 @@ export class UserService {
   }
 
   async findById(id: number): Promise<User | null> {
-    return this.userRepository.findOneByOrFail({ id });
+    return this.userRepository.findOneBy({ id });
   }
 
   async findByEmail(email: string): Promise<User | null> {

@@ -39,9 +39,9 @@ $ npm run migration:run
 $ npm run seeder:run
 ```
 
-user seeder account
-email : admin@admin.com
-password : admin123
+user seeder account\n
+email : admin@admin.com\n
+password : admin123\n
 
 ## Running the app
 

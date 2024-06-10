@@ -19,7 +19,7 @@ export class Users1713404869357 implements MigrationInterface {
           { name: 'gender', type: 'enum', enum: ['l', 'p'], isNullable: false },
           {
             name: 'profile_picture',
-            type: 'text',
+            type: 'varchar',
             isNullable: false,
             default:
               "'https://static.vecteezy.com/system/resources/previews/026/630/551/original/profile-icon-symbol-design-illustration-vector.jpg'",
@@ -31,13 +31,19 @@ export class Users1713404869357 implements MigrationInterface {
             isNullable: true,
           },
           {
-            name: 'created_at',
+            name: 'isDeleted',
+            type: 'boolean',
+            default: false,
+            isNullable: false,
+          },
+          {
+            name: 'createdAt',
             type: 'timestamp',
             default: 'CURRENT_TIMESTAMP',
             isNullable: false,
           },
           {
-            name: 'updated_at',
+            name: 'updatedAt',
             type: 'timestamp',
             default: 'CURRENT_TIMESTAMP',
             onUpdate: 'CURRENT_TIMESTAMP',

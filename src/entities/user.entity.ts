@@ -38,13 +38,13 @@ export class User {
 
   @Column({
     nullable: false,
-    type: 'text',
+    type: 'varchar',
     default:
-      "'https://static.vecteezy.com/system/resources/previews/026/630/551/original/profile-icon-symbol-design-illustration-vector.jpg'",
+      'https://static.vecteezy.com/system/resources/previews/026/630/551/original/profile-icon-symbol-design-illustration-vector.jpg',
   })
   profile_picture: string;
 
-  @Column({ nullable: false, default: null, select: false })
+  @Column({ nullable: true, default: null, select: false })
   @Exclude({ toPlainOnly: true })
   token: string;
 
