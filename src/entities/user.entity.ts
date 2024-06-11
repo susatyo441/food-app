@@ -6,7 +6,6 @@ import { IsNotEmpty, IsEmail } from 'class-validator';
 import { Conversation } from './conversation.entity';
 import { Post } from './post.entity';
 import { Transaction } from './transactions.entity';
-import { Address } from './address.entity';
 
 export enum Gender {
   l = 'l',
@@ -76,7 +75,4 @@ export class User {
 
   @OneToMany(() => Transaction, (transaction) => transaction.userRecipient)
   transactionsAsRecipient: Transaction[];
-
-  @OneToMany(() => Address, (address) => address.user)
-  addresses: Address[];
 }

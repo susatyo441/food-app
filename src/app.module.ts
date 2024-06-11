@@ -9,9 +9,6 @@ import { AuthController } from './controllers/auth.controller'; // Import AuthCo
 import { AuthService } from './services/auth.service'; // Import AuthService
 import { TypeOrmModule } from '@nestjs/typeorm';
 import { User } from 'src/entities/user.entity';
-import { AddressController } from 'src/controllers/address.controller';
-import { AddressService } from 'src/services/address.service';
-import { Address } from 'src/entities/address.entity';
 import { ServeStaticModule } from '@nestjs/serve-static';
 import { join } from 'path';
 import { PostController } from './controllers/post.controller';
@@ -32,7 +29,6 @@ import typeorm from './config/typeorm';
   imports: [
     TypeOrmModule.forFeature([
       User,
-      Address,
       Post,
       Category,
       CategoryPost,
@@ -63,7 +59,6 @@ import typeorm from './config/typeorm';
   providers: [
     UserService,
     AuthService,
-    AddressService,
     PostService,
     CategoryService,
     ...postProviders,
@@ -71,7 +66,6 @@ import typeorm from './config/typeorm';
   controllers: [
     UserController,
     AuthController,
-    AddressController,
     PostController,
     MediaController,
   ],

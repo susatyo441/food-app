@@ -15,7 +15,6 @@ import { ParseFilesPipe } from '../pipes/file-type-validation.pipe';
 import { CreatePostDto } from 'src/dto/post.dto';
 import { AuthGuard } from 'src/guard/auth.guard';
 import { PostService } from 'src/services/post.service';
-import { AddressService } from 'src/services/address.service';
 import { CategoryService } from 'src/services/category.service';
 import axios from 'axios';
 
@@ -24,7 +23,6 @@ import axios from 'axios';
 export class PostController {
   constructor(
     private readonly postService: PostService,
-    private readonly addressService: AddressService,
     private readonly categoryService: CategoryService,
   ) {}
 
@@ -48,17 +46,15 @@ export class PostController {
     @Req() req,
   ) {
     const userId = req.user.id;
-    const address = await this.addressService.findOne(
-      createPostDto.address_id,
-      userId,
-    );
     const categories = await this.categoryService.find(
       createPostDto.categories,
     );
+
     const formData = new FormData();
     images.forEach((image) => {
       formData.append('images', Buffer.from(image.buffer), image.originalname);
     });
+
     const response = await axios.post(
       'http://localhost:3000/media/upload',
       formData,
@@ -75,7 +71,6 @@ export class PostController {
       createPostDto,
       userId,
       categories,
-      address,
       mediaUrls,
     );
   }

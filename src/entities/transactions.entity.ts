@@ -1,5 +1,3 @@
-// src/models/transaction.entity.ts
-
 import {
   Entity,
   Column,
@@ -36,13 +34,19 @@ export class Transaction {
   @JoinColumn({ name: 'user_id_recipient' })
   userRecipient: User;
 
-  @Column({ nullable: false, type: 'text' })
-  detail: string;
+  @Column('json')
+  detail: {
+    variant_id: number;
+    jumlah: number;
+  };
 
-  @Column({ nullable: true, type: 'text' })
-  timeline: string;
+  @Column('json', { nullable: true })
+  timeline?: {
+    konfirmasi?: string;
+    pengambilan?: string;
+  };
 
-  @Column({ nullable: true, type: 'integer' })
+  @Column({ type: 'int', nullable: true })
   status: number;
 
   @Column({ type: 'timestamp', default: () => 'CURRENT_TIMESTAMP' })

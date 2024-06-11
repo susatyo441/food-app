@@ -6,6 +6,7 @@ import {
   Body,
   UseGuards,
   Req,
+  HttpException,
   UseInterceptors,
   UploadedFiles,
   ParseFilePipeBuilder,
@@ -50,18 +51,40 @@ export class AuthController {
         image.originalname,
       );
     });
-    const response = await axios.post(
-      'http://localhost:3000/media/upload-pfp',
-      formData,
-      {
-        headers: {
-          'Content-Type': 'multipart/form-data',
-        },
-      },
-    );
 
-    const mediaUrls = response.data;
-    return this.authService.register(registerDto, mediaUrls);
+    try {
+      const response = await axios.post(
+        'http://localhost:3000/media/upload-pfp',
+        formData,
+        {
+          headers: {
+            'Content-Type': 'multipart/form-data',
+          },
+        },
+      );
+
+      const mediaUrls = response.data;
+      return this.authService.register(registerDto, mediaUrls);
+    } catch (error) {
+      if (axios.isAxiosError(error)) {
+        const errorMessage = error.response?.data || error.message;
+        throw new HttpException(
+          {
+            status: error.response?.status || HttpStatus.INTERNAL_SERVER_ERROR,
+            error: errorMessage,
+          },
+          error.response?.status || HttpStatus.INTERNAL_SERVER_ERROR,
+        );
+      } else {
+        throw new HttpException(
+          {
+            status: HttpStatus.INTERNAL_SERVER_ERROR,
+            error: 'Unexpected error occurred',
+          },
+          HttpStatus.INTERNAL_SERVER_ERROR,
+        );
+      }
+    }
   }
 
   @Post('login')

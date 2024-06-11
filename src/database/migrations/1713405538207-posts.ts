@@ -19,16 +19,18 @@ export class Posts1713405538207 implements MigrationInterface {
             generationStrategy: 'increment',
           },
           { name: 'title', type: 'varchar', isNullable: false },
-          { name: 'body', type: 'text', isNullable: false },
+          {
+            name: 'body',
+            type: 'json',
+            isNullable: false,
+          },
           { name: 'user_id', type: 'int', isNullable: false }, // Foreign key column
-          { name: 'address_id', type: 'int', isNullable: true }, // Foreign key column
           {
             name: 'status',
             type: 'enum',
             enum: ['visible', 'hidden'],
             isNullable: false,
           },
-
           {
             name: 'createdAt',
             type: 'timestamp',
@@ -55,17 +57,6 @@ export class Posts1713405538207 implements MigrationInterface {
         onUpdate: 'CASCADE',
       }),
     );
-
-    await queryRunner.createForeignKey(
-      'posts',
-      new TableForeignKey({
-        columnNames: ['address_id'],
-        referencedColumnNames: ['id'],
-        referencedTableName: 'addresses',
-        onDelete: 'CASCADE',
-        onUpdate: 'CASCADE',
-      }),
-    );
   }
 
   public async down(queryRunner: QueryRunner): Promise<void> {
@@ -73,12 +64,8 @@ export class Posts1713405538207 implements MigrationInterface {
     const foreignKey1 = table.foreignKeys.find(
       (fk) => fk.columnNames.indexOf('user_id') !== -1,
     );
-    const foreignKey2 = table.foreignKeys.find(
-      (fk) => fk.columnNames.indexOf('address_id') !== -1,
-    );
 
     await queryRunner.dropForeignKey('posts', foreignKey1);
-    await queryRunner.dropForeignKey('posts', foreignKey2);
 
     await queryRunner.dropTable('posts');
   }

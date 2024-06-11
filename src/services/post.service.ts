@@ -6,7 +6,6 @@ import { Variant } from 'src/entities/variant.entity';
 import { CategoryPost } from 'src/entities/category-post.entity';
 import { Category } from 'src/entities/category.entity';
 import { PostMedia } from 'src/entities/post-media.entity';
-import { Address } from 'src/entities/address.entity';
 
 @Injectable()
 export class PostService {
@@ -18,7 +17,6 @@ export class PostService {
       variantRepository: Repository<Variant>;
       postMediaRepository: Repository<PostMedia>;
       categoryRepository: Repository<Category>;
-      addressRepository: Repository<Address>;
     },
   ) {}
 
@@ -26,15 +24,14 @@ export class PostService {
     postData: CreatePostDto,
     userId: number,
     categories: Category[],
-    address: Address,
     urlPhotos: string[],
   ): Promise<Post> {
     console.log(postData);
+
     // Buat objek Post
     const post = this.repositories.postRepository.create({
       ...postData,
       user: { id: userId },
-      address: address,
     });
 
     // Simpan objek Post ke dalam database
@@ -45,12 +42,8 @@ export class PostService {
         post: savedPost,
         category: category,
       });
-      categoryPost.post = savedPost;
-      categoryPost.category = category;
       await this.repositories.categoryPostRepository.save(categoryPost);
     }
-
-    // Buat entri baru di tabel Variant
 
     for (const variantData of postData.variants) {
       const variant = this.repositories.variantRepository.create({
@@ -60,7 +53,6 @@ export class PostService {
         ...(variantData.startAt && { startAt: variantData.startAt }),
         ...(variantData.expiredAt && { expiredAt: variantData.expiredAt }),
       });
-      // tambahkan properti lainnya sesuai kebutuhan
       await this.repositories.variantRepository.save(variant);
     }
 

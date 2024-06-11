@@ -21,8 +21,18 @@ export class Transactions1713405915991 implements MigrationInterface {
           { name: 'post_id', type: 'int' }, // Foreign key column
           { name: 'user_id_donor', type: 'int' }, // Foreign key column
           { name: 'user_id_recipient', type: 'int' }, // Foreign key column
-          { name: 'detail', type: 'text', isNullable: false },
-          { name: 'timeline', type: 'text', isNullable: true },
+          {
+            name: 'detail',
+            type: 'json',
+            isNullable: false,
+            comment: 'Contains variant_id and jumlah',
+          },
+          {
+            name: 'timeline',
+            type: 'json',
+            isNullable: true,
+            comment: 'Contains konfirmasi and pengambilan timestamps',
+          },
           { name: 'status', type: 'int', isNullable: true },
           {
             name: 'createdAt',

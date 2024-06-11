@@ -3,10 +3,22 @@ import {
   IsArray,
   ArrayNotEmpty,
   ArrayMinSize,
-  IsString,
   ArrayMaxSize,
+  IsString,
   IsOptional,
+  ValidateNested,
 } from 'class-validator';
+import { Type } from 'class-transformer';
+
+export class PostBody {
+  @IsNotEmpty()
+  @IsString()
+  alamat: string;
+
+  @IsOptional()
+  @IsString()
+  coordinate?: string;
+}
 
 export class CreatePostDto {
   @IsNotEmpty()
@@ -14,16 +26,16 @@ export class CreatePostDto {
   title: string;
 
   @IsNotEmpty()
-  address_id: number;
-
-  @IsNotEmpty()
-  @IsString()
-  body: string;
+  @ValidateNested()
+  @Type(() => PostBody)
+  body: PostBody;
 
   @IsArray()
   @ArrayNotEmpty()
   @ArrayMinSize(1)
   @ArrayMaxSize(5)
+  @ValidateNested({ each: true })
+  @Type(() => Variant)
   variants: Variant[];
 
   @IsArray()
