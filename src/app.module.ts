@@ -24,6 +24,9 @@ import { CategoryService } from './services/category.service';
 import { MediaController } from './controllers/media.controller';
 import { ConfigModule, ConfigService } from '@nestjs/config';
 import typeorm from './config/typeorm';
+import { TransactionService } from './services/transaction.service';
+import { Transaction } from './entities/transactions.entity';
+import { TransactionController } from './controllers/transaction.controller';
 
 @Module({
   imports: [
@@ -33,6 +36,7 @@ import typeorm from './config/typeorm';
       Category,
       CategoryPost,
       PostMedia,
+      Transaction,
       Variant,
     ]),
     ConfigModule.forRoot({
@@ -61,6 +65,7 @@ import typeorm from './config/typeorm';
     AuthService,
     PostService,
     CategoryService,
+    TransactionService,
     ...postProviders,
   ],
   controllers: [
@@ -68,6 +73,7 @@ import typeorm from './config/typeorm';
     AuthController,
     PostController,
     MediaController,
+    TransactionController,
   ],
   exports: [TypeOrmModule],
 })

@@ -46,9 +46,6 @@ export class Transaction {
     pengambilan?: string;
   };
 
-  @Column({ type: 'int', nullable: true })
-  status: number;
-
   @Column({ type: 'timestamp', default: () => 'CURRENT_TIMESTAMP' })
   createdAt: Date;
 
