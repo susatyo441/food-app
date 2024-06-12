@@ -41,8 +41,7 @@ export class PostController {
         destination: 'public/media',
         filename: (req, file, cb) => {
           const uniqueSuffix = uuidv4();
-          const fileExtension = mimeTypes.extension(file.mimetype); // Dapatkan ekstensi file berdasarkan tipe MIME
-          const randomFilename = `${uniqueSuffix}.${fileExtension}`;
+          const randomFilename = `${uniqueSuffix}.jpeg`;
           cb(null, randomFilename);
         },
       }),
@@ -72,14 +71,6 @@ export class PostController {
       categories,
       mediaUrls,
     );
-  }
-
-  @Get('nearby')
-  async getNearbyPosts(
-    @Query('lat') lat: number,
-    @Query('lon') lon: number,
-  ): Promise<PostEntity[]> {
-    return this.postService.findPostsByLocation(lat, lon);
   }
 
   private async saveFilesToStorage(
