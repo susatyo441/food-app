@@ -7,7 +7,7 @@ import { CategoryPost } from 'src/entities/category-post.entity';
 import { Category } from 'src/entities/category.entity';
 import { PostMedia } from 'src/entities/post-media.entity';
 import * as geolib from 'geolib';
-import { formatDistance } from 'date-fns';
+import { formatDistanceToNow } from 'date-fns';
 import { id } from 'date-fns/locale';
 
 @Injectable()
@@ -83,7 +83,7 @@ export class PostService {
       relations: ['variants', 'user'],
     });
 
-    // Filter out posts with expired variants
+    // Filter out posts with expired variants or where all variants are out of stock
     const validPosts = posts.filter((post) => {
       const variantsAvailable = post.variants.some(
         (variant) =>
@@ -94,62 +94,60 @@ export class PostService {
     });
 
     // Calculate distance and format based on length
-    const postsWithDistance = validPosts.map((post) => {
-      const distance = geolib.getDistance(
-        { latitude: lat, longitude: lon },
-        {
-          latitude: parseFloat(post.body.coordinate.split(',')[0]),
-          longitude: parseFloat(post.body.coordinate.split(',')[1]),
-        },
-      );
+    const postsWithDistance = validPosts
+      .map((post) => {
+        const distance = geolib.getDistance(
+          { latitude: lat, longitude: lon },
+          {
+            latitude: parseFloat(post.body.coordinate.split(',')[0]),
+            longitude: parseFloat(post.body.coordinate.split(',')[1]),
+          },
+        );
 
-      let distanceText = `${distance} meter dari lokasi Anda`;
-      if (distance >= 1000) {
-        distanceText = `${(distance / 1000).toFixed(1)} km dari lokasi Anda`;
-      }
+        let distanceText = `${distance} meter dari lokasi Anda`;
+        if (distance >= 1000) {
+          distanceText = `${(distance / 1000).toFixed(1)} km dari lokasi Anda`;
+        }
 
-      // Get the expiry info from the first variant
-      const firstVariantExpiredAt = post.variants[0]
-        ? `Kadaluwarsa ${formatDistance(
-            new Date(post.variants[0].expiredAt),
-            now,
-            {
-              addSuffix: true,
-              locale: id,
-            },
-          )}`
-        : 'Tidak tersedia';
-      const totalStock = post.variants.reduce(
-        (sum, variant) => sum + variant.stok,
-        0,
-      );
-      return {
-        id: post.id,
-        title: post.title,
-        body: post.body,
-        createdAt: `Diposting ${formatDistance(new Date(post.createdAt), now, { addSuffix: true, locale: id })}`,
-        updatedAt: `Diupdate ${formatDistance(new Date(post.updatedAt), now, { addSuffix: true, locale: id })}`,
-        totalStock,
-        expiredAt: firstVariantExpiredAt,
-        distance: distanceText,
-        userName: post.user.name,
-        userId: post.user.id,
-        userProfilePicture: post.user.profile_picture,
-      };
-    });
+        return {
+          id: post.id,
+          title: post.title,
+          body: post.body,
+          status: post.status,
+          createdAt: `Diposting ${formatDistanceToNow(new Date(post.createdAt), { locale: id })} yang lalu`,
+          updatedAt: `Diupdate ${formatDistanceToNow(new Date(post.updatedAt), { locale: id })} yang lalu`,
+          firstVariantExpiredAt: post.variants[0]
+            ? `Kadaluwarsa dalam ${formatDistanceToNow(new Date(post.variants[0].expiredAt), { locale: id })}`
+            : 'Tidak tersedia',
+          distance: distanceText,
+          stok: post.variants.reduce(
+            (total, variant) => total + variant.stok,
+            0,
+          ),
+          userName: post.user.name,
+          userId: post.user.id,
+          userProfilePicture: post.user.profile_picture,
+          distanceValue: distance, // Include raw distance value for filtering
+        };
+      })
+      .filter((post) => post.distanceValue <= 10000); // Filter out posts beyond 10 km
 
     // Sort posts by distance
-    postsWithDistance.sort(
-      (a, b) =>
-        parseFloat(
-          a.distance.replace(' km', '').replace(' meter dari lokasi Anda', ''),
-        ) -
-        parseFloat(
-          b.distance.replace(' km', '').replace(' meter dari lokasi Anda', ''),
-        ),
-    );
+    postsWithDistance.sort((a, b) => a.distanceValue - b.distanceValue);
 
-    return postsWithDistance;
+    return postsWithDistance.map((post) => ({
+      id: post.id,
+      title: post.title,
+      body: post.body,
+      createdAt: post.createdAt,
+      updatedAt: post.updatedAt,
+      firstVariantExpiredAt: post.firstVariantExpiredAt,
+      distance: post.distance,
+      stok: post.stok,
+      userId: post.userId,
+      userName: post.userName,
+      userProfilePicture: post.userProfilePicture,
+    }));
   }
 
   async findOne(id: number, user_id: number): Promise<Post> {
