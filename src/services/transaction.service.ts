@@ -30,6 +30,13 @@ export class TransactionService {
       throw new BadRequestException('Variant not found');
     }
 
+    // Check if the variant has expired
+    if (variant.expiredAt && new Date(variant.expiredAt) < new Date()) {
+      throw new BadRequestException(
+        'Variant has expired and cannot be used for transactions',
+      );
+    }
+
     if (createTransactionDto.detail.jumlah > variant.stok) {
       throw new BadRequestException('Jumlah exceeds available stok');
     }

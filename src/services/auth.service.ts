@@ -16,7 +16,7 @@ export class AuthService {
 
   async register(
     userData: RegisterDto,
-    urlPhotos: string[],
+    urlPhoto: string,
   ): Promise<{ user: User; token: string }> {
     const existingUser = await this.userService.findByEmail(userData.email);
     if (existingUser) {
@@ -29,7 +29,7 @@ export class AuthService {
       email: userData.email,
       password: hashedPassword,
       gender: userData.gender,
-      profile_picture: urlPhotos[0], // Save the path of the uploaded file
+      profile_picture: urlPhoto, // Save the path of the uploaded file
     });
 
     const token = await this.generateToken(newUser.email);
