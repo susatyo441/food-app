@@ -52,6 +52,11 @@ export class TransactionService {
       post,
       userDonor: { id: user_id_donor },
       userRecipient: { id: userId },
+      detail: {
+        ...createTransactionDto.detail,
+        review: null, // Initialize review as null
+        comment: null, // Initialize comment as null
+      },
       timeline: {
         konfirmasi: new Date().toISOString(),
         pengambilan: null,

@@ -20,10 +20,11 @@ export class Post {
   @Column({ nullable: false })
   title: string;
 
-  @Column({ type: 'json', nullable: false })
+  @Column('json', { nullable: false })
   body: {
     alamat: string;
-    coordinate?: string;
+    coordinate: string;
+    deskripsi?: string; // Add deskripsi key
   };
 
   @ManyToOne(() => User, (user) => user.posts, {

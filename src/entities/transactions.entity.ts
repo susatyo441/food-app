@@ -38,6 +38,8 @@ export class Transaction {
   detail: {
     variant_id: number;
     jumlah: number;
+    review?: number; // Add review key
+    comment?: string; // Add comment key
   };
 
   @Column('json', { nullable: true })
