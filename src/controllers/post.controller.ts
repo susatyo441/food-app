@@ -5,9 +5,12 @@ import {
   UploadedFiles,
   Body,
   Req,
+  Get,
+  Query,
   UseGuards,
 } from '@nestjs/common';
 import { FilesInterceptor } from '@nestjs/platform-express';
+import { Post as PostEntity } from '../entities/post.entity';
 import { ConfigService } from '@nestjs/config';
 import { CreatePostDto } from 'src/dto/post.dto';
 import { AuthGuard } from 'src/guard/auth.guard';
@@ -57,6 +60,14 @@ export class PostController {
       categories,
       mediaUrls,
     );
+  }
+
+  @Get('nearby')
+  async getNearbyPosts(
+    @Query('lat') lat: number,
+    @Query('lon') lon: number,
+  ): Promise<PostEntity[]> {
+    return this.postService.findPostsByLocation(lat, lon);
   }
 
   private async saveFilesToStorage(

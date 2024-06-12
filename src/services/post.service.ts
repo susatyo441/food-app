@@ -7,6 +7,8 @@ import { CategoryPost } from 'src/entities/category-post.entity';
 import { Category } from 'src/entities/category.entity';
 import { PostMedia } from 'src/entities/post-media.entity';
 import * as geolib from 'geolib';
+import { formatDistance } from 'date-fns';
+import { id } from 'date-fns/locale';
 
 @Injectable()
 export class PostService {
@@ -73,6 +75,8 @@ export class PostService {
   }
 
   async findPostsByLocation(lat: number, lon: number): Promise<any[]> {
+    const now = new Date();
+
     // Get all posts with status 'visible'
     const posts = await this.repositories.postRepository.find({
       where: { status: 'visible' },
@@ -80,14 +84,16 @@ export class PostService {
     });
 
     // Filter out posts with expired variants
-    const validPosts = posts.filter((post) =>
-      post.variants.every(
+    const validPosts = posts.filter((post) => {
+      const variantsAvailable = post.variants.some(
         (variant) =>
-          !variant.expiredAt || new Date(variant.expiredAt) > new Date(),
-      ),
-    );
+          variant.stok > 0 &&
+          (!variant.expiredAt || new Date(variant.expiredAt) > now),
+      );
+      return variantsAvailable;
+    });
 
-    // Calculate distance and sort by nearest
+    // Calculate distance and format based on length
     const postsWithDistance = validPosts.map((post) => {
       const distance = geolib.getDistance(
         { latitude: lat, longitude: lon },
@@ -96,22 +102,52 @@ export class PostService {
           longitude: parseFloat(post.body.coordinate.split(',')[1]),
         },
       );
+
+      let distanceText = `${distance} meter dari lokasi Anda`;
+      if (distance >= 1000) {
+        distanceText = `${(distance / 1000).toFixed(1)} km dari lokasi Anda`;
+      }
+
+      // Get the expiry info from the first variant
+      const firstVariantExpiredAt = post.variants[0]
+        ? `Kadaluwarsa ${formatDistance(
+            new Date(post.variants[0].expiredAt),
+            now,
+            {
+              addSuffix: true,
+              locale: id,
+            },
+          )}`
+        : 'Tidak tersedia';
+      const totalStock = post.variants.reduce(
+        (sum, variant) => sum + variant.stok,
+        0,
+      );
       return {
         id: post.id,
         title: post.title,
         body: post.body,
-        status: post.status,
-        createdAt: post.createdAt,
-        updatedAt: post.updatedAt,
-        variants: post.variants,
-        distance,
+        createdAt: `Diposting ${formatDistance(new Date(post.createdAt), now, { addSuffix: true, locale: id })}`,
+        updatedAt: `Diupdate ${formatDistance(new Date(post.updatedAt), now, { addSuffix: true, locale: id })}`,
+        totalStock,
+        expiredAt: firstVariantExpiredAt,
+        distance: distanceText,
         userName: post.user.name,
+        userId: post.user.id,
         userProfilePicture: post.user.profile_picture,
       };
     });
 
     // Sort posts by distance
-    postsWithDistance.sort((a, b) => a.distance - b.distance);
+    postsWithDistance.sort(
+      (a, b) =>
+        parseFloat(
+          a.distance.replace(' km', '').replace(' meter dari lokasi Anda', ''),
+        ) -
+        parseFloat(
+          b.distance.replace(' km', '').replace(' meter dari lokasi Anda', ''),
+        ),
+    );
 
     return postsWithDistance;
   }
