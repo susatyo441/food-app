@@ -6,6 +6,7 @@ import { Variant } from 'src/entities/variant.entity';
 import { CategoryPost } from 'src/entities/category-post.entity';
 import { Category } from 'src/entities/category.entity';
 import { PostMedia } from 'src/entities/post-media.entity';
+import * as geolib from 'geolib';
 
 @Injectable()
 export class PostService {
@@ -69,6 +70,50 @@ export class PostService {
 
   async findAll(): Promise<Post[]> {
     return await this.repositories.postRepository.find();
+  }
+
+  async findPostsByLocation(lat: number, lon: number): Promise<any[]> {
+    // Get all posts with status 'visible'
+    const posts = await this.repositories.postRepository.find({
+      where: { status: 'visible' },
+      relations: ['variants', 'user'],
+    });
+
+    // Filter out posts with expired variants
+    const validPosts = posts.filter((post) =>
+      post.variants.every(
+        (variant) =>
+          !variant.expiredAt || new Date(variant.expiredAt) > new Date(),
+      ),
+    );
+
+    // Calculate distance and sort by nearest
+    const postsWithDistance = validPosts.map((post) => {
+      const distance = geolib.getDistance(
+        { latitude: lat, longitude: lon },
+        {
+          latitude: parseFloat(post.body.coordinate.split(',')[0]),
+          longitude: parseFloat(post.body.coordinate.split(',')[1]),
+        },
+      );
+      return {
+        id: post.id,
+        title: post.title,
+        body: post.body,
+        status: post.status,
+        createdAt: post.createdAt,
+        updatedAt: post.updatedAt,
+        variants: post.variants,
+        distance,
+        userName: post.user.name,
+        userProfilePicture: post.user.profile_picture,
+      };
+    });
+
+    // Sort posts by distance
+    postsWithDistance.sort((a, b) => a.distance - b.distance);
+
+    return postsWithDistance;
   }
 
   async findOne(id: number, user_id: number): Promise<Post> {
