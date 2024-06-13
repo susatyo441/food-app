@@ -6,6 +6,7 @@ import { IsNotEmpty, IsEmail } from 'class-validator';
 import { Conversation } from './conversation.entity';
 import { Post } from './post.entity';
 import { Transaction } from './transactions.entity';
+import { Notification } from './notification.entity';
 
 export enum Gender {
   l = 'l',
@@ -72,6 +73,9 @@ export class User {
 
   @OneToMany(() => Transaction, (transaction) => transaction.userDonor)
   transactionsAsDonor: Transaction[];
+
+  @OneToMany(() => Notification, (notification) => notification.user)
+  notifications: Notification[];
 
   @OneToMany(() => Transaction, (transaction) => transaction.userRecipient)
   transactionsAsRecipient: Transaction[];

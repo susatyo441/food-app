@@ -30,7 +30,7 @@ export class Transactions1713405915991 implements MigrationInterface {
           {
             name: 'timeline',
             type: 'json',
-            isNullable: true,
+            isNullable: false,
             comment: 'Contains konfirmasi and pengambilan timestamps',
           },
           { name: 'status', type: 'int', isNullable: true },

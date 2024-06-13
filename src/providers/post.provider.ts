@@ -8,6 +8,9 @@ import { CategoryPost } from 'src/entities/category-post.entity';
 import { Category } from 'src/entities/category.entity';
 import { PostMedia } from 'src/entities/post-media.entity';
 import { getRepositoryToken } from '@nestjs/typeorm';
+import { NotificationService } from 'src/services/notification.service';
+import { Notification } from 'src/entities/notification.entity';
+import { Transaction } from 'src/entities/transactions.entity';
 
 export const postProviders: Provider[] = [
   {
@@ -18,6 +21,8 @@ export const postProviders: Provider[] = [
       variantRepository: Repository<Variant>,
       postMediaRepository: Repository<PostMedia>,
       categoryRepository: Repository<Category>,
+      notificationService: NotificationService,
+      transactionRepository: Repository<Transaction>,
     ) => {
       return {
         postRepository,
@@ -25,6 +30,8 @@ export const postProviders: Provider[] = [
         variantRepository,
         postMediaRepository,
         categoryRepository,
+        notificationService,
+        transactionRepository,
       };
     },
     inject: [
@@ -33,6 +40,8 @@ export const postProviders: Provider[] = [
       getRepositoryToken(Variant),
       getRepositoryToken(PostMedia),
       getRepositoryToken(Category),
+      getRepositoryToken(Notification),
+      getRepositoryToken(Transaction),
     ],
   },
 ];

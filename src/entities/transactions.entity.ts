@@ -43,8 +43,8 @@ export class Transaction {
     maks_pengambilan: string;
   };
 
-  @Column('json', { nullable: true })
-  timeline?: {
+  @Column('json')
+  timeline: {
     konfirmasi?: string;
     pengambilan?: string;
   };

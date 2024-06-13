@@ -5,11 +5,11 @@ import {
   TableForeignKey,
 } from 'typeorm';
 
-export class Posts1713405538207 implements MigrationInterface {
+export class Notification1913406111934 implements MigrationInterface {
   public async up(queryRunner: QueryRunner): Promise<void> {
     await queryRunner.createTable(
       new Table({
-        name: 'posts',
+        name: 'notification',
         columns: [
           {
             name: 'id',
@@ -18,24 +18,23 @@ export class Posts1713405538207 implements MigrationInterface {
             isGenerated: true,
             generationStrategy: 'increment',
           },
-          { name: 'title', type: 'varchar', isNullable: false },
           {
-            name: 'body',
+            name: 'title',
+            type: 'varchar',
+          },
+          {
+            name: 'name',
+            type: 'varchar',
+          },
+          {
+            name: 'data',
             type: 'json',
-            isNullable: false,
-          },
-          { name: 'user_id', type: 'int', isNullable: false }, // Foreign key column
-          {
-            name: 'status',
-            type: 'enum',
-            enum: ['visible', 'hidden'],
-            isNullable: false,
+            isNullable: true, // JSON column that can be null
           },
           {
-            name: 'isReported',
+            name: 'isRead',
             type: 'boolean',
             default: false,
-            isNullable: false,
           },
           {
             name: 'createdAt',
@@ -43,36 +42,31 @@ export class Posts1713405538207 implements MigrationInterface {
             default: 'CURRENT_TIMESTAMP',
           },
           {
-            name: 'updatedAt',
-            type: 'timestamp',
-            default: 'CURRENT_TIMESTAMP',
-            onUpdate: 'CURRENT_TIMESTAMP',
+            name: 'user_id',
+            type: 'int',
+            isNullable: false,
           },
         ],
       }),
     );
 
-    // Foreign key constraints
     await queryRunner.createForeignKey(
-      'posts',
+      'notification',
       new TableForeignKey({
         columnNames: ['user_id'],
         referencedColumnNames: ['id'],
         referencedTableName: 'users',
         onDelete: 'CASCADE',
-        onUpdate: 'CASCADE',
       }),
     );
   }
 
   public async down(queryRunner: QueryRunner): Promise<void> {
-    const table = await queryRunner.getTable('posts');
-    const foreignKey1 = table.foreignKeys.find(
+    const table = await queryRunner.getTable('notification');
+    const foreignKey = table.foreignKeys.find(
       (fk) => fk.columnNames.indexOf('user_id') !== -1,
     );
-
-    await queryRunner.dropForeignKey('posts', foreignKey1);
-
-    await queryRunner.dropTable('posts');
+    await queryRunner.dropForeignKey('notification', foreignKey);
+    await queryRunner.dropTable('notification');
   }
 }

@@ -71,6 +71,14 @@ export class PostController {
     return this.postService.findPostsByLocation(lat, lon, search);
   }
 
+  @Get('recent')
+  async getRecentPosts(
+    @Query('lat') lat: number,
+    @Query('lon') lon: number,
+  ): Promise<any[]> {
+    return this.postService.findRecentPosts(lat, lon);
+  }
+
   private async saveFilesToStorage(
     files: Array<Express.Multer.File>,
   ): Promise<string[]> {

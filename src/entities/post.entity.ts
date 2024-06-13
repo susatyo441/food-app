@@ -42,6 +42,9 @@ export class Post {
   })
   status: 'visible' | 'hidden';
 
+  @Column({ default: false, nullable: false })
+  isReported: boolean;
+
   @Column({ type: 'timestamp', default: () => 'CURRENT_TIMESTAMP' })
   createdAt: Date;
 

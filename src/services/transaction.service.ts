@@ -8,6 +8,8 @@ import {
 } from '../dto/create-transaction.dto';
 import { Variant } from '../entities/variant.entity';
 import { Post } from '../entities/post.entity';
+import { NotificationService } from './notification.service';
+import { User } from 'src/entities/user.entity';
 
 @Injectable()
 export class TransactionService {
@@ -18,6 +20,9 @@ export class TransactionService {
     private readonly variantRepository: Repository<Variant>,
     @InjectRepository(Post)
     private readonly postRepository: Repository<Post>,
+    private readonly notificationService: NotificationService,
+    @InjectRepository(User)
+    private readonly userRepository: Repository<User>,
   ) {}
 
   async create(
@@ -25,6 +30,26 @@ export class TransactionService {
     userId: number,
   ): Promise<Transaction> {
     const now = new Date();
+
+    // Check if the user has an ongoing transaction
+    const transactions = await this.transactionRepository.find({
+      where: {
+        userRecipient: { id: userId },
+      },
+    });
+
+    // Filter transactions to check for ongoing transactions
+    const ongoingTransaction = transactions.find(
+      (transaction) =>
+        !transaction.timeline?.pengambilan &&
+        new Date(transaction.detail.maks_pengambilan) > now,
+    );
+
+    if (ongoingTransaction) {
+      throw new BadRequestException(
+        'You have an ongoing transaction that has not been picked up yet',
+      );
+    }
 
     // Get the post and its variants
     const post = await this.postRepository.findOne({
@@ -72,12 +97,21 @@ export class TransactionService {
         ? new Date(variant.expiredAt).toISOString()
         : twoHoursFromNow.toISOString();
 
+    // Get the recipient user from the database
+    const recipientUser = await this.userRepository.findOne({
+      where: { id: userId },
+    });
+
+    if (!recipientUser) {
+      throw new BadRequestException('Recipient user not found');
+    }
+
     // Create transaction object
     const transaction = this.transactionRepository.create({
       ...createTransactionDto,
       post,
       userDonor: { id: user_id_donor },
-      userRecipient: { id: userId },
+      userRecipient: recipientUser,
       detail: {
         ...createTransactionDto.detail,
         review: null, // Initialize review as null
@@ -96,6 +130,14 @@ export class TransactionService {
     variant.stok -= createTransactionDto.detail.jumlah;
     await this.variantRepository.save(variant);
 
+    await this.notificationService.createNotification(
+      post.user,
+      'Penerima baru untuk donasi Anda',
+      `Seorang penerima telah mengkonfirmasi akan mengambil donasi Anda dengan jumlah: ${createTransactionDto.detail.jumlah}.`,
+      recipientUser.name,
+      savedTransaction.id,
+    );
+
     return savedTransaction;
   }
 
@@ -107,7 +149,7 @@ export class TransactionService {
 
     const transaction = await this.transactionRepository.findOne({
       where: { id: confirmPengambilanDto.transactionId },
-      relations: ['userRecipient'],
+      relations: ['userRecipient', 'userDonor'],
     });
 
     if (!transaction) {
@@ -136,6 +178,17 @@ export class TransactionService {
     transaction.detail.review = confirmPengambilanDto.review;
     transaction.detail.comment = confirmPengambilanDto.comment;
 
-    return await this.transactionRepository.save(transaction);
+    const savedTransaction = await this.transactionRepository.save(transaction);
+
+    // Create notification for the donor
+    await this.notificationService.createNotification(
+      transaction.userDonor,
+      'Pengambilan Dikonfirmasi',
+      `Review: ${confirmPengambilanDto.review}/5, Comment: ${confirmPengambilanDto.comment}`,
+      transaction.userRecipient.name,
+      transaction.id,
+    );
+
+    return savedTransaction;
   }
 }
