@@ -8,6 +8,7 @@ import {
   Get,
   Query,
   UseGuards,
+  Param,
 } from '@nestjs/common';
 import { FilesInterceptor } from '@nestjs/platform-express';
 import { Post as PostEntity } from '../entities/post.entity';
@@ -18,6 +19,7 @@ import { PostService } from 'src/services/post.service';
 import { CategoryService } from 'src/services/category.service';
 import { diskStorage } from 'multer';
 import { v4 as uuidv4 } from 'uuid';
+import { UserService } from 'src/services/user.service';
 
 @Controller('post')
 @UseGuards(AuthGuard)
@@ -26,6 +28,7 @@ export class PostController {
     private readonly postService: PostService,
     private readonly categoryService: CategoryService,
     private readonly configService: ConfigService,
+    private readonly userService: UserService,
   ) {}
 
   @Post('create')
@@ -71,6 +74,17 @@ export class PostController {
     return this.postService.findPostsByLocation(lat, lon, search);
   }
 
+  @Get('find/:id')
+  async findPostById(
+    @Param('id') id: number,
+    @Query('lat') lat: number,
+    @Query('lon') lon: number,
+    @Req() req,
+  ): Promise<any> {
+    const userId = req.user.id;
+    return this.postService.findPostById(id, lat, lon, userId);
+  }
+
   @Get('recent')
   async getRecentPosts(
     @Query('lat') lat: number,
@@ -78,7 +92,17 @@ export class PostController {
   ): Promise<any[]> {
     return this.postService.findRecentPosts(lat, lon);
   }
-
+  @Post('report/:id')
+  async reportPost(
+    @Param('id') id: number,
+    @Req() req,
+    @Body('reason') reason: string,
+    @Body('transactionId') transactionId: number,
+  ) {
+    const userId = req.user.id;
+    const reporter = await this.userService.findById(userId);
+    return this.postService.reportPost(id, reporter, reason, transactionId);
+  }
   private async saveFilesToStorage(
     files: Array<Express.Multer.File>,
   ): Promise<string[]> {

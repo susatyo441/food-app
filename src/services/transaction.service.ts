@@ -191,4 +191,59 @@ export class TransactionService {
 
     return savedTransaction;
   }
+
+  async cancelTransaction(
+    transactionId: number,
+    userId: number,
+  ): Promise<{ message: string }> {
+    const transaction = await this.transactionRepository.findOne({
+      where: { id: transactionId },
+      relations: ['userRecipient', 'userDonor', 'post'],
+    });
+
+    if (!transaction) {
+      throw new BadRequestException('Transaction not found');
+    }
+
+    if (transaction.userRecipient.id !== userId) {
+      throw new BadRequestException(
+        'You are not authorized to cancel this transaction',
+      );
+    }
+
+    const now = new Date();
+    // Check if the transaction is still ongoing
+    if (
+      transaction.timeline?.pengambilan ||
+      new Date(transaction.detail.maks_pengambilan) < now
+    ) {
+      throw new BadRequestException(
+        'Transaction is not ongoing or has already expired',
+      );
+    }
+
+    // Increase the stock of the variant
+    const variant = await this.variantRepository.findOne({
+      where: { id: transaction.detail.variant_id },
+    });
+
+    if (variant) {
+      variant.stok += transaction.detail.jumlah;
+      await this.variantRepository.save(variant);
+    }
+
+    // Notify the user donor about the cancellation
+    await this.notificationService.createNotification(
+      transaction.userDonor,
+      'Transaksi telah dibatalkan',
+      `Transaksi Anda dengan judul "${transaction.post.title}" telah dibatalkan oleh penerima.`,
+      transaction.userRecipient.name,
+      transaction.id,
+    );
+
+    // Remove the transaction
+    await this.transactionRepository.remove(transaction);
+
+    return { message: 'Transaction has been successfully cancelled' };
+  }
 }

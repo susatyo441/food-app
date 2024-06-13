@@ -1,4 +1,12 @@
-import { Controller, Post, Body, UseGuards, Req } from '@nestjs/common';
+import {
+  Controller,
+  Post,
+  Body,
+  UseGuards,
+  Req,
+  Delete,
+  Param,
+} from '@nestjs/common';
 import { AuthGuard } from '../guard/auth.guard';
 import { TransactionService } from '../services/transaction.service';
 import {
@@ -31,5 +39,14 @@ export class TransactionController {
       confirmPengambilanDto,
       userId,
     );
+  }
+
+  @Delete('cancel/:transactionId')
+  async cancelTransaction(
+    @Param('transactionId') transactionId: number,
+    @Req() req,
+  ) {
+    const userId = req.user.id;
+    return this.transactionService.cancelTransaction(transactionId, userId);
   }
 }

@@ -3,6 +3,7 @@ import {
   Inject,
   Injectable,
   NotFoundException,
+  UnauthorizedException,
 } from '@nestjs/common';
 import { In, Like, Repository, Raw } from 'typeorm';
 import { Post } from '../entities/post.entity';
@@ -358,8 +359,10 @@ export class PostService {
     postId: number,
     reporter: User,
     reason: string,
-    transactionId?: number,
+    transactionId: number,
   ): Promise<Post> {
+    const now = new Date();
+
     const post = await this.repositories.postRepository.findOne({
       where: { id: postId },
       relations: ['user'],
@@ -373,10 +376,58 @@ export class PostService {
       throw new BadRequestException('Post already reported');
     }
 
+    // If transactionId is provided, check if the reporter is the userRecipient of the transaction
+    if (transactionId) {
+      const transaction = await this.repositories.transactionRepository.findOne(
+        {
+          where: { id: transactionId },
+          relations: ['userRecipient', 'post'],
+        },
+      );
+
+      if (!transaction) {
+        throw new BadRequestException('Transaction not found');
+      }
+
+      // Check if the postId matches the post_id in the transaction
+      if (transaction.post.id != postId) {
+        throw new BadRequestException(
+          `${postId} ${transaction.post.id} Transaction does not belong to the specified post`,
+        );
+      }
+
+      if (transaction.userRecipient.id !== reporter.id) {
+        throw new UnauthorizedException(
+          'You are not authorized to report this post',
+        );
+      }
+
+      // Check if the transaction is ongoing
+      if (
+        !(
+          !transaction.timeline?.pengambilan &&
+          new Date(transaction.detail.maks_pengambilan) > now
+        )
+      ) {
+        throw new BadRequestException(
+          'Anda sedang tidak menjalankan transaksi ini saat ini.',
+        );
+      }
+
+      // Update timeline.pengambilan to now
+      if (!transaction.timeline) {
+        transaction.timeline = {};
+      }
+      transaction.timeline.pengambilan = now.toISOString();
+
+      // Save the updated transaction
+      await this.repositories.transactionRepository.save(transaction);
+    }
+
     post.isReported = true;
     await this.repositories.postRepository.save(post);
 
-    // Buat notifikasi untuk user donor
+    // Create a notification for the user donor
     await this.notificationService.createNotification(
       post.user,
       'Postingan anda telah dilaporkan',
@@ -386,5 +437,129 @@ export class PostService {
     );
 
     return post;
+  }
+
+  async findPostById(
+    idPost: number,
+    lat: number,
+    lon: number,
+    userId: number,
+  ): Promise<any> {
+    const now = new Date();
+
+    // Get the post by ID with its relations
+    const post = await this.repositories.postRepository.findOne({
+      where: { id: idPost },
+      relations: [
+        'variants',
+        'user',
+        'categoryPosts',
+        'categoryPosts.category',
+      ],
+    });
+
+    if (!post) {
+      throw new NotFoundException('Post not found');
+    }
+
+    // Get userIds from the post (user donors)
+    const userIdDonor = post.user.id;
+
+    // Get average review for the user donor
+    const transactions = await this.repositories.transactionRepository.find({
+      where: {
+        userDonor: post.user,
+        detail: Raw(
+          (alias) =>
+            `JSON_UNQUOTE(JSON_EXTRACT(${alias}, '$.review')) IS NOT NULL`,
+        ),
+      },
+      relations: ['userDonor'],
+    });
+
+    const userReviewMap = transactions.reduce((map, transaction) => {
+      const userId = transaction.userDonor.id;
+      const review = transaction.detail.review;
+      if (review !== null && review !== undefined) {
+        if (!map[userId]) {
+          map[userId] = { totalReview: 0, count: 0 };
+        }
+        map[userId].totalReview += review;
+        map[userId].count += 1;
+      }
+      return map;
+    }, {});
+
+    const averageReview = userReviewMap[userIdDonor]
+      ? userReviewMap[userIdDonor].totalReview /
+        userReviewMap[userIdDonor].count
+      : null;
+
+    // Calculate distance
+    const distance = geolib.getDistance(
+      { latitude: lat, longitude: lon },
+      {
+        latitude: parseFloat(post.body.coordinate.split(',')[0]),
+        longitude: parseFloat(post.body.coordinate.split(',')[1]),
+      },
+    );
+
+    let distanceText = `${distance} meter dari lokasi Anda`;
+    if (distance >= 1000) {
+      distanceText = `${(distance / 1000).toFixed(1)} km dari lokasi Anda`;
+    }
+
+    // Get ongoing transaction for this post and user
+    const transactionsForUser =
+      await this.repositories.transactionRepository.find({
+        where: {
+          userRecipient: { id: userId },
+          post: { id: idPost },
+        },
+      });
+
+    // Filter transactions to check for ongoing transactions
+    const ongoingTransaction = transactionsForUser.find(
+      (transaction) =>
+        !transaction.timeline?.pengambilan &&
+        new Date(transaction.detail.maks_pengambilan) > now,
+    );
+
+    return {
+      id: post.id,
+      title: post.title,
+      body: post.body,
+      createdAt: `Diposting ${formatDistanceToNow(new Date(post.createdAt), {
+        locale: id,
+      })} yang lalu`,
+      updatedAt: `Diupdate ${formatDistanceToNow(new Date(post.updatedAt), {
+        locale: id,
+      })} yang lalu`,
+      expiredAt: post.variants[0]
+        ? `Kadaluwarsa dalam ${formatDistanceToNow(
+            new Date(post.variants[0].expiredAt),
+            { locale: id },
+          )}`
+        : 'Tidak tersedia',
+      distance: distanceText,
+      stok: post.variants.reduce((total, variant) => total + variant.stok, 0),
+      userName: post.user.name,
+      userId: post.user.id,
+      userProfilePicture: post.user.profile_picture,
+      averageReview: averageReview,
+      categories: post.categoryPosts.map((cp) => cp.category.name),
+      variants: post.variants.map((variant) => ({
+        id: variant.id,
+        name: variant.name,
+        stok: variant.stok,
+      })),
+      transaction: ongoingTransaction
+        ? {
+            id: ongoingTransaction.id,
+            detail: ongoingTransaction.detail,
+            timeline: ongoingTransaction.timeline,
+          }
+        : null,
+    };
   }
 }
