@@ -74,14 +74,26 @@ export class PostService {
     return await this.repositories.postRepository.find();
   }
 
-  async findPostsByLocation(lat: number, lon: number): Promise<any[]> {
+  async findPostsByLocation(
+    lat: number,
+    lon: number,
+    search?: string,
+  ): Promise<any[]> {
     const now = new Date();
 
     // Get all posts with status 'visible'
-    const posts = await this.repositories.postRepository.find({
-      where: { status: 'visible' },
-      relations: ['variants', 'user'],
-    });
+    const query = this.repositories.postRepository
+      .createQueryBuilder('post')
+      .leftJoinAndSelect('post.variants', 'variants')
+      .leftJoinAndSelect('post.user', 'user')
+      .where('post.status = :status', { status: 'visible' });
+
+    // Add search condition if search query is provided
+    if (search) {
+      query.andWhere('post.title LIKE :search', { search: `%${search}%` });
+    }
+
+    const posts = await query.getMany();
 
     // Filter out posts with expired variants or where all variants are out of stock
     const validPosts = posts.filter((post) => {

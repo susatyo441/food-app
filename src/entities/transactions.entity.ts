@@ -40,6 +40,7 @@ export class Transaction {
     jumlah: number;
     review?: number; // Add review key
     comment?: string; // Add comment key
+    maks_pengambilan: string;
   };
 
   @Column('json', { nullable: true })

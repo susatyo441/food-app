@@ -1,4 +1,12 @@
-import { IsNotEmpty, IsNumber, ValidateNested } from 'class-validator';
+import {
+  IsInt,
+  IsNotEmpty,
+  IsNumber,
+  IsOptional,
+  Max,
+  Min,
+  ValidateNested,
+} from 'class-validator';
 import { Type } from 'class-transformer';
 
 export class DetailDto {
@@ -20,4 +28,17 @@ export class CreateTransactionDto {
   @ValidateNested()
   @Type(() => DetailDto)
   detail: DetailDto;
+}
+
+export class ConfirmPengambilanDto {
+  @IsNotEmpty()
+  transactionId: number;
+
+  @IsInt()
+  @Min(1)
+  @Max(5)
+  review: number;
+
+  @IsOptional()
+  comment?: string;
 }

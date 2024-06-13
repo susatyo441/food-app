@@ -2,7 +2,10 @@ import { Injectable, BadRequestException } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
 import { Repository } from 'typeorm';
 import { Transaction } from '../entities/transactions.entity';
-import { CreateTransactionDto } from '../dto/create-transaction.dto';
+import {
+  ConfirmPengambilanDto,
+  CreateTransactionDto,
+} from '../dto/create-transaction.dto';
 import { Variant } from '../entities/variant.entity';
 import { Post } from '../entities/post.entity';
 
@@ -21,17 +24,38 @@ export class TransactionService {
     createTransactionDto: CreateTransactionDto,
     userId: number,
   ): Promise<Transaction> {
-    // Check if variant_id exists and jumlah does not exceed stok
-    const variant = await this.variantRepository.findOne({
-      where: { id: createTransactionDto.detail.variant_id },
+    const now = new Date();
+
+    // Get the post and its variants
+    const post = await this.postRepository.findOne({
+      where: { id: createTransactionDto.post_id },
+      relations: ['variants', 'user'],
     });
 
+    if (!post) {
+      throw new BadRequestException('Post not found');
+    }
+
+    const user_id_donor = post.user.id;
+
+    // Check if the user is the owner of the post
+    if (user_id_donor === userId) {
+      throw new BadRequestException(
+        'You cannot make a transaction on your own post',
+      );
+    }
+
+    // Check if the variant belongs to the post
+    const variant = post.variants.find(
+      (v) => v.id === createTransactionDto.detail.variant_id,
+    );
+
     if (!variant) {
-      throw new BadRequestException('Variant not found');
+      throw new BadRequestException('Variant not found in the specified post');
     }
 
     // Check if the variant has expired
-    if (variant.expiredAt && new Date(variant.expiredAt) < new Date()) {
+    if (variant.expiredAt && new Date(variant.expiredAt) < now) {
       throw new BadRequestException(
         'Variant has expired and cannot be used for transactions',
       );
@@ -41,17 +65,12 @@ export class TransactionService {
       throw new BadRequestException('Jumlah exceeds available stok');
     }
 
-    // Get user_id_donor from post_id
-    const post = await this.postRepository.findOne({
-      where: { id: createTransactionDto.post_id },
-      relations: ['user'],
-    });
-
-    if (!post) {
-      throw new BadRequestException('Post not found');
-    }
-
-    const user_id_donor = post.user.id;
+    // Calculate maks_pengambilan
+    const twoHoursFromNow = new Date(now.getTime() + 2 * 60 * 60 * 1000);
+    const maks_pengambilan =
+      variant.expiredAt && new Date(variant.expiredAt) < twoHoursFromNow
+        ? new Date(variant.expiredAt).toISOString()
+        : twoHoursFromNow.toISOString();
 
     // Create transaction object
     const transaction = this.transactionRepository.create({
@@ -63,9 +82,10 @@ export class TransactionService {
         ...createTransactionDto.detail,
         review: null, // Initialize review as null
         comment: null, // Initialize comment as null
+        maks_pengambilan, // Add maks_pengambilan
       },
       timeline: {
-        konfirmasi: new Date().toISOString(),
+        konfirmasi: now.toISOString(),
         pengambilan: null,
       },
     });
@@ -77,5 +97,45 @@ export class TransactionService {
     await this.variantRepository.save(variant);
 
     return savedTransaction;
+  }
+
+  async confirmPengambilan(
+    confirmPengambilanDto: ConfirmPengambilanDto,
+    userId: number,
+  ): Promise<Transaction> {
+    const now = new Date();
+
+    const transaction = await this.transactionRepository.findOne({
+      where: { id: confirmPengambilanDto.transactionId },
+      relations: ['userRecipient'],
+    });
+
+    if (!transaction) {
+      throw new BadRequestException('Transaction not found');
+    }
+
+    if (transaction.timeline?.pengambilan) {
+      throw new BadRequestException('Transaction has already been confirmed');
+    }
+
+    if (new Date(transaction.detail.maks_pengambilan) < now) {
+      throw new BadRequestException('The pickup time has expired');
+    }
+
+    if (transaction.userRecipient.id !== userId) {
+      throw new BadRequestException(
+        'Only the recipient can confirm the pickup',
+      );
+    }
+
+    if (!transaction.timeline) {
+      transaction.timeline = {};
+    }
+
+    transaction.timeline.pengambilan = now.toISOString();
+    transaction.detail.review = confirmPengambilanDto.review;
+    transaction.detail.comment = confirmPengambilanDto.comment;
+
+    return await this.transactionRepository.save(transaction);
   }
 }

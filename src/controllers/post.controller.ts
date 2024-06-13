@@ -62,12 +62,13 @@ export class PostController {
     );
   }
 
-  @Get('nearby')
+  @Get()
   async getNearbyPosts(
     @Query('lat') lat: number,
     @Query('lon') lon: number,
+    @Query('search') search?: string,
   ): Promise<PostEntity[]> {
-    return this.postService.findPostsByLocation(lat, lon);
+    return this.postService.findPostsByLocation(lat, lon, search);
   }
 
   private async saveFilesToStorage(
