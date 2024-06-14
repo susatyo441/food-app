@@ -349,6 +349,7 @@ export class TransactionService {
             ? 'ongoing'
             : 'completed',
         detail: variantDetails,
+        review: transaction.detail.review ?? null, // Add review
         timeline: transaction.timeline,
         createdAt: transaction.createdAt,
         updatedAt: transaction.updatedAt,
