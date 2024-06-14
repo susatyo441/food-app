@@ -8,7 +8,10 @@ import {
   Req,
   UploadedFile,
   UseInterceptors,
+  BadRequestException,
 } from '@nestjs/common';
+import * as mime from 'mime-types';
+import * as fs from 'fs';
 import { AuthService } from '../services/auth.service';
 import { RegisterDto, LoginDto } from '../dto/auth.dto';
 import { AuthGuard } from 'src/guard/auth.guard';
@@ -28,12 +31,22 @@ export class AuthController {
   @Post('register')
   @UseInterceptors(
     FileInterceptor('profile_picture', {
-      // Use FileInterceptor for a single file
       storage: diskStorage({
-        destination: 'public/media',
+        destination: (req, file, cb) => {
+          const dest = 'public/media';
+          if (!fs.existsSync(dest)) {
+            fs.mkdirSync(dest, { recursive: true });
+          }
+          cb(null, dest);
+        },
         filename: (req, file, cb) => {
           const uniqueSuffix = uuidv4();
-          cb(null, `${uniqueSuffix}.jpeg`); // Always save as JPEG
+          let fileExtension = mime.extension(file.mimetype);
+          if (fileExtension === 'bin') {
+            fileExtension = 'jpeg'; // Rename bin to jpeg
+          }
+          const randomFilename = `${uniqueSuffix}.${fileExtension}`;
+          cb(null, randomFilename);
         },
       }),
     }),
@@ -42,8 +55,14 @@ export class AuthController {
     @UploadedFile() profile_picture: Express.Multer.File,
     @Body() registerDto: RegisterDto,
   ): Promise<{ user: User; token: string }> {
+    if (!profile_picture) {
+      throw new BadRequestException('Profile picture is required');
+    }
+
     const url = this.configService.get<string>('URL');
-    const mediaUrl = `${url}/${profile_picture.path.replace(/\\/g, '/').replace('public/', '')}`;
+    const mediaUrl = `${url}/${profile_picture.path
+      .replace(/\\/g, '/')
+      .replace('public/', '')}`;
 
     return this.authService.register(registerDto, mediaUrl);
   }

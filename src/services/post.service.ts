@@ -99,134 +99,7 @@ export class PostService {
         isReported: false,
         ...(search && { title: Like(`%${search}%`) }),
       },
-      relations: ['variants', 'user'],
-    });
-
-    // Get userIds from posts (user donors)
-    const userIds = posts.map((post) => post.user.id);
-
-    // Get average review for each user donor
-    const transactions = await this.repositories.transactionRepository.find({
-      where: {
-        userDonor: In(userIds),
-        detail: Raw(
-          (alias) =>
-            `JSON_UNQUOTE(JSON_EXTRACT(${alias}, '$.review')) IS NOT NULL`,
-        ),
-      },
-      relations: ['userDonor'],
-    });
-
-    const userReviewMap = transactions.reduce((map, transaction) => {
-      const userId = transaction.userDonor.id;
-      const review = transaction.detail.review;
-      if (review !== null && review !== undefined) {
-        if (!map[userId]) {
-          map[userId] = { totalReview: 0, count: 0 };
-        }
-        map[userId].totalReview += review;
-        map[userId].count += 1;
-      }
-      return map;
-    }, {});
-
-    for (const userId in userReviewMap) {
-      userReviewMap[userId] =
-        userReviewMap[userId].totalReview / userReviewMap[userId].count;
-    }
-
-    // Filter out posts with expired variants or where all variants are out of stock
-    const validPosts = posts.filter((post) => {
-      const variantsAvailable = post.variants.some(
-        (variant) =>
-          variant.stok > 0 &&
-          (!variant.expiredAt || new Date(variant.expiredAt) > now),
-      );
-      return variantsAvailable;
-    });
-
-    // Calculate distance and format based on length
-    const postsWithDistance = validPosts
-      .map((post) => {
-        const distance = geolib.getDistance(
-          { latitude: lat, longitude: lon },
-          {
-            latitude: parseFloat(post.body.coordinate.split(',')[0]),
-            longitude: parseFloat(post.body.coordinate.split(',')[1]),
-          },
-        );
-
-        let distanceText = `${distance} meter dari lokasi Anda`;
-        if (distance >= 1000) {
-          distanceText = `${(distance / 1000).toFixed(1)} km dari lokasi Anda`;
-        }
-
-        return {
-          id: post.id,
-          title: post.title,
-          body: post.body,
-          status: post.status,
-          createdAt: `Diposting ${formatDistanceToNow(new Date(post.createdAt), { locale: id })} yang lalu`,
-          updatedAt: `Diupdate ${formatDistanceToNow(new Date(post.updatedAt), { locale: id })} yang lalu`,
-          firstVariantExpiredAt: post.variants[0]
-            ? `Kadaluwarsa dalam ${formatDistanceToNow(new Date(post.variants[0].expiredAt), { locale: id })}`
-            : 'Tidak tersedia',
-          distance: distanceText,
-          stok: post.variants.reduce(
-            (total, variant) => total + variant.stok,
-            0,
-          ),
-          userName: post.user.name,
-          userId: post.user.id,
-          userProfilePicture: post.user.profile_picture,
-          distanceValue: distance, // Include raw distance value for filtering
-          averageReview: userReviewMap[post.user.id] || null, // Add average review
-        };
-      })
-      .filter((post) => post.distanceValue <= 10000); // Filter out posts beyond 10 km
-
-    // Sort posts by distance
-    postsWithDistance.sort((a, b) => a.distanceValue - b.distanceValue);
-
-    return postsWithDistance.map((post) => ({
-      id: post.id,
-      title: post.title,
-      body: post.body,
-      createdAt: post.createdAt,
-      updatedAt: post.updatedAt,
-      expiredAt: post.firstVariantExpiredAt,
-      distance: post.distance,
-      stok: post.stok,
-      userId: post.userId,
-      userName: post.userName,
-      userProfilePicture: post.userProfilePicture,
-      averageReview: post.averageReview,
-    }));
-  }
-
-  async findOne(id: number, user_id: number): Promise<Post> {
-    const post = await this.repositories.postRepository.findOne({
-      where: { user: { id: user_id }, id: id },
-    });
-    if (!post) {
-      throw new NotFoundException('Post not found');
-    }
-    return post;
-  }
-
-  async findRecentPosts(lat: number, lon: number): Promise<any[]> {
-    const now = new Date();
-
-    // Get all posts with status 'visible' and 'isReported' false, sorted by 'createdAt' descending
-    const posts = await this.repositories.postRepository.find({
-      where: {
-        status: 'visible',
-        isReported: false,
-      },
-      relations: ['variants', 'user'],
-      order: {
-        createdAt: 'DESC', // Order by createdAt descending
-      },
+      relations: ['variants', 'user', 'media'],
     });
 
     // Get userIds from posts (user donors)
@@ -318,11 +191,14 @@ export class PostService {
           userProfilePicture: post.user.profile_picture,
           distanceValue: distance, // Include raw distance value for filtering
           averageReview: userReviewMap[post.user.id] || null, // Add average review
+          media: post.media, // Add media
         };
       })
       .filter((post) => post.distanceValue <= 10000); // Filter out posts beyond 10 km
 
-    // Return formatted posts
+    // Sort posts by distance
+    postsWithDistance.sort((a, b) => a.distanceValue - b.distanceValue);
+
     return postsWithDistance.map((post) => ({
       id: post.id,
       title: post.title,
@@ -336,6 +212,144 @@ export class PostService {
       userName: post.userName,
       userProfilePicture: post.userProfilePicture,
       averageReview: post.averageReview,
+      media: post.media,
+    }));
+  }
+
+  async findOne(id: number, user_id: number): Promise<Post> {
+    const post = await this.repositories.postRepository.findOne({
+      where: { user: { id: user_id }, id: id },
+    });
+    if (!post) {
+      throw new NotFoundException('Post not found');
+    }
+    return post;
+  }
+
+  async findRecentPosts(lat: number, lon: number): Promise<any[]> {
+    const now = new Date();
+
+    // Get all posts with status 'visible'
+    const posts = await this.repositories.postRepository.find({
+      where: {
+        status: 'visible',
+        isReported: false,
+      },
+      relations: ['variants', 'user', 'media'],
+      order: { createdAt: 'DESC' },
+    });
+
+    // Get userIds from posts (user donors)
+    const userIds = posts.map((post) => post.user.id);
+
+    // Get average review for each user donor
+    const transactions = await this.repositories.transactionRepository.find({
+      where: {
+        userDonor: In(userIds),
+        detail: Raw(
+          (alias) =>
+            `JSON_UNQUOTE(JSON_EXTRACT(${alias}, '$.review')) IS NOT NULL`,
+        ),
+      },
+      relations: ['userDonor'],
+    });
+
+    const userReviewMap = transactions.reduce((map, transaction) => {
+      const userId = transaction.userDonor.id;
+      const review = transaction.detail.review;
+      if (review !== null && review !== undefined) {
+        if (!map[userId]) {
+          map[userId] = { totalReview: 0, count: 0 };
+        }
+        map[userId].totalReview += review;
+        map[userId].count += 1;
+      }
+      return map;
+    }, {});
+
+    for (const userId in userReviewMap) {
+      userReviewMap[userId] =
+        userReviewMap[userId].totalReview / userReviewMap[userId].count;
+    }
+
+    // Filter out posts with expired variants or where all variants are out of stock
+    const validPosts = posts.filter((post) => {
+      const variantsAvailable = post.variants.some(
+        (variant) =>
+          variant.stok > 0 &&
+          (!variant.expiredAt || new Date(variant.expiredAt) > now),
+      );
+      return variantsAvailable;
+    });
+
+    // Calculate distance and format based on length
+    const postsWithDistance = validPosts
+      .map((post) => {
+        const distance = geolib.getDistance(
+          { latitude: lat, longitude: lon },
+          {
+            latitude: parseFloat(post.body.coordinate.split(',')[0]),
+            longitude: parseFloat(post.body.coordinate.split(',')[1]),
+          },
+        );
+
+        let distanceText = `${distance} meter dari lokasi Anda`;
+        if (distance >= 1000) {
+          distanceText = `${(distance / 1000).toFixed(1)} km dari lokasi Anda`;
+        }
+
+        return {
+          id: post.id,
+          title: post.title,
+          body: post.body,
+          status: post.status,
+          createdAt: `Diposting ${formatDistanceToNow(
+            new Date(post.createdAt),
+            {
+              locale: id,
+            },
+          )} yang lalu`,
+          updatedAt: `Diupdate ${formatDistanceToNow(new Date(post.updatedAt), {
+            locale: id,
+          })} yang lalu`,
+          firstVariantExpiredAt: post.variants[0]
+            ? `Kadaluwarsa dalam ${formatDistanceToNow(
+                new Date(post.variants[0].expiredAt),
+                { locale: id },
+              )}`
+            : 'Tidak tersedia',
+          distance: distanceText,
+          stok: post.variants.reduce(
+            (total, variant) => total + variant.stok,
+            0,
+          ),
+          userName: post.user.name,
+          userId: post.user.id,
+          userProfilePicture: post.user.profile_picture,
+          distanceValue: distance, // Include raw distance value for filtering
+          averageReview: userReviewMap[post.user.id] || null, // Add average review
+          media: post.media, // Add media
+        };
+      })
+      .filter((post) => post.distanceValue <= 10000); // Filter out posts beyond 10 km
+
+    // Sort posts by distance
+    postsWithDistance.sort((a, b) => a.distanceValue - b.distanceValue);
+
+    return postsWithDistance.map((post) => ({
+      id: post.id,
+      title: post.title,
+      body: post.body,
+      createdAt: post.createdAt,
+      updatedAt: post.updatedAt,
+      expiredAt: post.firstVariantExpiredAt,
+      distance: post.distance,
+      stok: post.stok,
+      userId: post.userId,
+      userName: post.userName,
+      userProfilePicture: post.userProfilePicture,
+      averageReview: post.averageReview,
+      media: post.media,
     }));
   }
 
@@ -455,6 +469,7 @@ export class PostService {
         'user',
         'categoryPosts',
         'categoryPosts.category',
+        'media', // Add media relation
       ],
     });
 
@@ -560,6 +575,10 @@ export class PostService {
             timeline: ongoingTransaction.timeline,
           }
         : null,
+      media: post.media.map((media) => ({
+        id: media.id,
+        url: media.url,
+      })),
     };
   }
 }
