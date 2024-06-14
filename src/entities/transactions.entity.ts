@@ -38,9 +38,10 @@ export class Transaction {
   detail: {
     variant_id: number[];
     jumlah: number[];
-    review?: number; // Add review key
-    comment?: string; // Add comment key
+    review?: number;
+    comment?: string;
     maks_pengambilan: string;
+    recipientLocation?: { lat: number; lon: number }; // Add recipient location
   };
 
   @Column('json')

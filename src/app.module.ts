@@ -29,6 +29,10 @@ import { Transaction } from './entities/transactions.entity';
 import { Notification } from './entities/notification.entity';
 import { postProviders } from './providers/post.provider';
 import typeorm from './config/typeorm';
+import { LocationService } from './services/location.service';
+import { LocationController } from './controllers/location.controller';
+import { NotificationController } from './controllers/notification.controller';
+import { FirebaseAdminService } from './services/firebase-admin.service';
 
 @Module({
   imports: [
@@ -70,6 +74,8 @@ import typeorm from './config/typeorm';
     CategoryService,
     TransactionService,
     NotificationService,
+    LocationService,
+    FirebaseAdminService,
     ...postProviders,
   ],
   controllers: [
@@ -78,6 +84,8 @@ import typeorm from './config/typeorm';
     PostController,
     MediaController,
     TransactionController,
+    LocationController,
+    NotificationController,
   ],
   exports: [TypeOrmModule],
 })
