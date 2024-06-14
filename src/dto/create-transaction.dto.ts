@@ -1,6 +1,7 @@
 import {
   ArrayNotEmpty,
   IsArray,
+  IsEnum,
   IsInt,
   IsNotEmpty,
   IsNumber,
@@ -51,4 +52,15 @@ export class ConfirmPengambilanDto {
 
   @IsOptional()
   comment?: string;
+}
+
+export enum TransactionRole {
+  DONOR = 'donor',
+  RECIPIENT = 'recipient',
+}
+
+export class GetTransactionsFilterDto {
+  @IsOptional()
+  @IsEnum(TransactionRole)
+  role?: TransactionRole;
 }

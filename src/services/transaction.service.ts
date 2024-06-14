@@ -5,6 +5,8 @@ import { Transaction } from '../entities/transactions.entity';
 import {
   ConfirmPengambilanDto,
   CreateTransactionDto,
+  GetTransactionsFilterDto,
+  TransactionRole,
 } from '../dto/create-transaction.dto';
 import { Variant } from '../entities/variant.entity';
 import { Post } from '../entities/post.entity';
@@ -264,5 +266,93 @@ export class TransactionService {
     await this.transactionRepository.remove(transaction);
 
     return { message: 'Transaction has been successfully cancelled' };
+  }
+
+  async getUserTransactions(
+    userId: number,
+    filterDto: GetTransactionsFilterDto,
+  ): Promise<any[]> {
+    const { role } = filterDto;
+    const now = new Date();
+
+    let transactions: Transaction[];
+
+    if (role === TransactionRole.DONOR) {
+      transactions = await this.transactionRepository.find({
+        where: { userDonor: { id: userId } },
+        relations: [
+          'post',
+          'post.media',
+          'post.variants',
+          'userDonor',
+          'userRecipient',
+        ],
+        order: {
+          createdAt: 'DESC',
+        },
+      });
+    } else if (role === TransactionRole.RECIPIENT) {
+      transactions = await this.transactionRepository.find({
+        where: { userRecipient: { id: userId } },
+        relations: [
+          'post',
+          'post.media',
+          'post.variants',
+          'userDonor',
+          'userRecipient',
+        ],
+        order: {
+          createdAt: 'DESC',
+        },
+      });
+    } else {
+      transactions = await this.transactionRepository.find({
+        where: [
+          { userDonor: { id: userId } },
+          { userRecipient: { id: userId } },
+        ],
+        relations: [
+          'post',
+          'post.media',
+          'post.variants',
+          'userDonor',
+          'userRecipient',
+        ],
+        order: {
+          createdAt: 'DESC',
+        },
+      });
+    }
+
+    return transactions.map((transaction) => {
+      const variantDetails = transaction.detail.variant_id.map((id, index) => {
+        const variant = transaction.post.variants.find((v) => v.id === id);
+        return {
+          variantId: id,
+          variantName: variant ? variant.name : 'Unknown',
+          jumlah: transaction.detail.jumlah[index],
+        };
+      });
+
+      return {
+        id: transaction.id,
+        postId: transaction.post.id,
+        postTitle: transaction.post.title,
+        postMedia: transaction.post.media.map((media) => ({
+          id: media.id,
+          url: media.url,
+        })),
+        role: transaction.userDonor.id === userId ? 'donor' : 'recipient',
+        status:
+          !transaction.timeline?.pengambilan &&
+          new Date(transaction.detail.maks_pengambilan) > now
+            ? 'ongoing'
+            : 'completed',
+        detail: variantDetails,
+        timeline: transaction.timeline,
+        createdAt: transaction.createdAt,
+        updatedAt: transaction.updatedAt,
+      };
+    });
   }
 }

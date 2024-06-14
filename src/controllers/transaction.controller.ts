@@ -6,12 +6,15 @@ import {
   Req,
   Delete,
   Param,
+  Get,
+  Query,
 } from '@nestjs/common';
 import { AuthGuard } from '../guard/auth.guard';
 import { TransactionService } from '../services/transaction.service';
 import {
   ConfirmPengambilanDto,
   CreateTransactionDto,
+  GetTransactionsFilterDto,
 } from '../dto/create-transaction.dto';
 import { Transaction } from '../entities/transactions.entity';
 
@@ -48,5 +51,13 @@ export class TransactionController {
   ) {
     const userId = req.user.id;
     return this.transactionService.cancelTransaction(transactionId, userId);
+  }
+
+  @Get()
+  async getUserTransactions(
+    @Req() req,
+    @Query() filterDto: GetTransactionsFilterDto,
+  ): Promise<any[]> {
+    return this.transactionService.getUserTransactions(req.user.id, filterDto);
   }
 }
