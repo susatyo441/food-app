@@ -53,7 +53,7 @@ export class TransactionService {
 
     // Get the post and its variants
     const post = await this.postRepository.findOne({
-      where: { id: createTransactionDto.post_id },
+      where: { id: createTransactionDto.post_id, isReported: false },
       relations: ['variants', 'user'],
     });
 
@@ -70,32 +70,38 @@ export class TransactionService {
       );
     }
 
-    // Check if the variant belongs to the post
-    const variant = post.variants.find(
-      (v) => v.id === createTransactionDto.detail.variant_id,
-    );
-
-    if (!variant) {
-      throw new BadRequestException('Variant not found in the specified post');
-    }
-
-    // Check if the variant has expired
-    if (variant.expiredAt && new Date(variant.expiredAt) < now) {
-      throw new BadRequestException(
-        'Variant has expired and cannot be used for transactions',
+    // Check if the variants belong to the post
+    const variants = createTransactionDto.detail.map((variantDetail) => {
+      const variant = post.variants.find(
+        (v) => v.id === variantDetail.variant_id,
       );
-    }
-
-    if (createTransactionDto.detail.jumlah > variant.stok) {
-      throw new BadRequestException('Jumlah exceeds available stok');
-    }
+      if (!variant) {
+        throw new BadRequestException(
+          `Variant with id ${variantDetail.variant_id} not found in the specified post`,
+        );
+      }
+      if (variant.expiredAt && new Date(variant.expiredAt) < now) {
+        throw new BadRequestException(
+          `Variant with id ${variantDetail.variant_id} has expired and cannot be used for transactions`,
+        );
+      }
+      if (variantDetail.jumlah > variant.stok) {
+        throw new BadRequestException(
+          `Jumlah exceeds available stok for variant with id ${variantDetail.variant_id}`,
+        );
+      }
+      return { variant, jumlah: variantDetail.jumlah };
+    });
 
     // Calculate maks_pengambilan
     const twoHoursFromNow = new Date(now.getTime() + 2 * 60 * 60 * 1000);
-    const maks_pengambilan =
-      variant.expiredAt && new Date(variant.expiredAt) < twoHoursFromNow
-        ? new Date(variant.expiredAt).toISOString()
-        : twoHoursFromNow.toISOString();
+    const maks_pengambilan = variants.reduce((latest, { variant }) => {
+      const variantMaks =
+        variant.expiredAt && new Date(variant.expiredAt) < twoHoursFromNow
+          ? new Date(variant.expiredAt).toISOString()
+          : twoHoursFromNow.toISOString();
+      return latest < variantMaks ? latest : variantMaks;
+    }, twoHoursFromNow.toISOString());
 
     // Get the recipient user from the database
     const recipientUser = await this.userRepository.findOne({
@@ -113,7 +119,8 @@ export class TransactionService {
       userDonor: { id: user_id_donor },
       userRecipient: recipientUser,
       detail: {
-        ...createTransactionDto.detail,
+        variant_id: createTransactionDto.detail.map((d) => d.variant_id),
+        jumlah: createTransactionDto.detail.map((d) => d.jumlah),
         review: null, // Initialize review as null
         comment: null, // Initialize comment as null
         maks_pengambilan, // Add maks_pengambilan
@@ -126,14 +133,21 @@ export class TransactionService {
 
     const savedTransaction = await this.transactionRepository.save(transaction);
 
-    // Reduce the stok from the variant
-    variant.stok -= createTransactionDto.detail.jumlah;
-    await this.variantRepository.save(variant);
+    // Reduce the stok from the variants
+    for (const { variant, jumlah } of variants) {
+      variant.stok -= jumlah;
+      await this.variantRepository.save(variant);
+    }
 
     await this.notificationService.createNotification(
       post.user,
       'Penerima baru untuk donasi Anda',
-      `Seorang penerima telah mengkonfirmasi akan mengambil donasi Anda dengan jumlah: ${createTransactionDto.detail.jumlah}.`,
+      `Seorang penerima telah mengkonfirmasi akan mengambil ${post.title} Anda dengan jumlah: ${createTransactionDto.detail
+        .map((d) => {
+          const variant = post.variants.find((v) => v.id === d.variant_id);
+          return `${variant.name} - ${d.jumlah}`;
+        })
+        .join(', ')}.`,
       recipientUser.name,
       savedTransaction.id,
     );
@@ -222,14 +236,19 @@ export class TransactionService {
       );
     }
 
-    // Increase the stock of the variant
-    const variant = await this.variantRepository.findOne({
-      where: { id: transaction.detail.variant_id },
-    });
+    // Increase the stock of the variants
+    for (let i = 0; i < transaction.detail.variant_id.length; i++) {
+      const variantId = transaction.detail.variant_id[i];
+      const jumlah = transaction.detail.jumlah[i];
 
-    if (variant) {
-      variant.stok += transaction.detail.jumlah;
-      await this.variantRepository.save(variant);
+      const variant = await this.variantRepository.findOne({
+        where: { id: variantId },
+      });
+
+      if (variant) {
+        variant.stok += jumlah;
+        await this.variantRepository.save(variant);
+      }
     }
 
     // Notify the user donor about the cancellation

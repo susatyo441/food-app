@@ -36,8 +36,8 @@ export class Transaction {
 
   @Column('json')
   detail: {
-    variant_id: number;
-    jumlah: number;
+    variant_id: number[];
+    jumlah: number[];
     review?: number; // Add review key
     comment?: string; // Add comment key
     maks_pengambilan: string;

@@ -40,8 +40,6 @@ export class PostService {
     categories: Category[],
     urlPhotos: string[],
   ): Promise<Post> {
-    console.log(postData);
-
     // Buat objek Post
     const post = this.repositories.postRepository.create({
       ...postData,
@@ -122,16 +120,17 @@ export class PostService {
       const review = transaction.detail.review;
       if (review !== null && review !== undefined) {
         if (!map[userId]) {
-          map[userId] = { totalReview: 0, count: 0 };
+          map[userId] = { totalReview: 0, count: 0, reviewCount: 0 };
         }
         map[userId].totalReview += review;
         map[userId].count += 1;
+        map[userId].reviewCount += 1;
       }
       return map;
     }, {});
 
     for (const userId in userReviewMap) {
-      userReviewMap[userId] =
+      userReviewMap[userId].averageReview =
         userReviewMap[userId].totalReview / userReviewMap[userId].count;
     }
 
@@ -190,7 +189,8 @@ export class PostService {
           userId: post.user.id,
           userProfilePicture: post.user.profile_picture,
           distanceValue: distance, // Include raw distance value for filtering
-          averageReview: userReviewMap[post.user.id] || null, // Add average review
+          averageReview: userReviewMap[post.user.id]?.averageReview || null, // Add average review
+          reviewCount: userReviewMap[post.user.id]?.reviewCount || 0, // Add review count
           media: post.media, // Add media
         };
       })
@@ -212,6 +212,7 @@ export class PostService {
       userName: post.userName,
       userProfilePicture: post.userProfilePicture,
       averageReview: post.averageReview,
+      reviewCount: post.reviewCount, // Include review count
       media: post.media,
     }));
   }
@@ -259,16 +260,17 @@ export class PostService {
       const review = transaction.detail.review;
       if (review !== null && review !== undefined) {
         if (!map[userId]) {
-          map[userId] = { totalReview: 0, count: 0 };
+          map[userId] = { totalReview: 0, count: 0, reviewCount: 0 };
         }
         map[userId].totalReview += review;
         map[userId].count += 1;
+        map[userId].reviewCount += 1;
       }
       return map;
     }, {});
 
     for (const userId in userReviewMap) {
-      userReviewMap[userId] =
+      userReviewMap[userId].averageReview =
         userReviewMap[userId].totalReview / userReviewMap[userId].count;
     }
 
@@ -327,7 +329,8 @@ export class PostService {
           userId: post.user.id,
           userProfilePicture: post.user.profile_picture,
           distanceValue: distance, // Include raw distance value for filtering
-          averageReview: userReviewMap[post.user.id] || null, // Add average review
+          averageReview: userReviewMap[post.user.id]?.averageReview || null, // Add average review
+          reviewCount: userReviewMap[post.user.id]?.reviewCount || 0, // Add review count
           media: post.media, // Add media
         };
       })
@@ -349,6 +352,7 @@ export class PostService {
       userName: post.userName,
       userProfilePicture: post.userProfilePicture,
       averageReview: post.averageReview,
+      reviewCount: post.reviewCount, // Include review count
       media: post.media,
     }));
   }
@@ -406,7 +410,7 @@ export class PostService {
       // Check if the postId matches the post_id in the transaction
       if (transaction.post.id != postId) {
         throw new BadRequestException(
-          `${postId} ${transaction.post.id} Transaction does not belong to the specified post`,
+          `Transaction does not belong to the specified post`,
         );
       }
 
@@ -463,7 +467,7 @@ export class PostService {
 
     // Get the post by ID with its relations
     const post = await this.repositories.postRepository.findOne({
-      where: { id: idPost },
+      where: { id: idPost, isReported: false },
       relations: [
         'variants',
         'user',
@@ -497,10 +501,11 @@ export class PostService {
       const review = transaction.detail.review;
       if (review !== null && review !== undefined) {
         if (!map[userId]) {
-          map[userId] = { totalReview: 0, count: 0 };
+          map[userId] = { totalReview: 0, count: 0, reviewCount: 0 };
         }
         map[userId].totalReview += review;
         map[userId].count += 1;
+        map[userId].reviewCount += 1;
       }
       return map;
     }, {});
@@ -509,6 +514,8 @@ export class PostService {
       ? userReviewMap[userIdDonor].totalReview /
         userReviewMap[userIdDonor].count
       : null;
+
+    const reviewCount = userReviewMap[userIdDonor]?.reviewCount || 0;
 
     // Calculate distance
     const distance = geolib.getDistance(
@@ -562,6 +569,7 @@ export class PostService {
       userId: post.user.id,
       userProfilePicture: post.user.profile_picture,
       averageReview: averageReview,
+      reviewCount: reviewCount, // Include review count
       categories: post.categoryPosts.map((cp) => cp.category.name),
       variants: post.variants.map((variant) => ({
         id: variant.id,

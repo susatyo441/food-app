@@ -1,4 +1,6 @@
 import {
+  ArrayNotEmpty,
+  IsArray,
   IsInt,
   IsNotEmpty,
   IsNumber,
@@ -21,13 +23,21 @@ export class DetailDto {
 
 export class CreateTransactionDto {
   @IsNotEmpty()
-  @IsNumber()
   post_id: number;
 
+  @IsArray()
+  @ArrayNotEmpty()
+  @ValidateNested({ each: true })
+  @Type(() => VariantDetailDto)
+  detail: VariantDetailDto[];
+}
+
+export class VariantDetailDto {
   @IsNotEmpty()
-  @ValidateNested()
-  @Type(() => DetailDto)
-  detail: DetailDto;
+  variant_id: number;
+
+  @IsNotEmpty()
+  jumlah: number;
 }
 
 export class ConfirmPengambilanDto {
