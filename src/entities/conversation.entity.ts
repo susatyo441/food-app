@@ -1,39 +1,30 @@
-// src/entities/conversation.entity.ts
-
 import {
   Entity,
   PrimaryGeneratedColumn,
+  CreateDateColumn,
   ManyToOne,
   JoinColumn,
-  OneToMany,
-  Column,
 } from 'typeorm';
 import { User } from './user.entity';
-import { Chat } from './chat.entity';
+import { Message } from './message.entity';
 
 @Entity('conversations')
 export class Conversation {
   @PrimaryGeneratedColumn()
   id: number;
 
-  @ManyToOne(() => User, { onDelete: 'CASCADE', onUpdate: 'CASCADE' })
-  @JoinColumn({ name: 'user_id_donor' })
-  userDonor: User;
+  @ManyToOne(() => User)
+  @JoinColumn({ name: 'user1_id' })
+  user1: User;
 
-  @ManyToOne(() => User, { onDelete: 'CASCADE', onUpdate: 'CASCADE' })
-  @JoinColumn({ name: 'user_id_recipient' })
-  userRecipient: User;
+  @ManyToOne(() => User)
+  @JoinColumn({ name: 'user2_id' })
+  user2: User;
 
-  @Column({ type: 'timestamp', default: () => 'CURRENT_TIMESTAMP' })
-  createdAt: Date;
+  @ManyToOne(() => Message)
+  @JoinColumn({ name: 'last_message_id' })
+  lastMessage: Message;
 
-  @Column({
-    type: 'timestamp',
-    default: () => 'CURRENT_TIMESTAMP',
-    onUpdate: 'CURRENT_TIMESTAMP',
-  })
-  updatedAt: Date;
-
-  @OneToMany(() => Chat, (chat) => chat.conversation)
-  chats: Chat[];
+  @CreateDateColumn()
+  last_update: Date;
 }

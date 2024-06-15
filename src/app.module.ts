@@ -33,6 +33,13 @@ import { LocationService } from './services/location.service';
 import { LocationController } from './controllers/location.controller';
 import { NotificationController } from './controllers/notification.controller';
 import { FirebaseAdminService } from './services/firebase-admin.service';
+import { ConversationsController } from './controllers/conversation.controller';
+import { MessagesController } from './controllers/message.controller';
+import { MessagesService } from './services/message.service';
+import { ConversationsService } from './services/conversation.service';
+import { File } from './entities/file.entity';
+import { Message } from './entities/message.entity';
+import { Conversation } from './entities/conversation.entity';
 
 @Module({
   imports: [
@@ -45,6 +52,9 @@ import { FirebaseAdminService } from './services/firebase-admin.service';
       Transaction,
       Variant,
       Notification,
+      File,
+      Message,
+      Conversation,
     ]),
     ConfigModule.forRoot({
       isGlobal: true,
@@ -76,6 +86,8 @@ import { FirebaseAdminService } from './services/firebase-admin.service';
     NotificationService,
     LocationService,
     FirebaseAdminService,
+    MessagesService,
+    ConversationsService,
     ...postProviders,
   ],
   controllers: [
@@ -86,6 +98,8 @@ import { FirebaseAdminService } from './services/firebase-admin.service';
     TransactionController,
     LocationController,
     NotificationController,
+    ConversationsController,
+    MessagesController,
   ],
   exports: [TypeOrmModule],
 })
