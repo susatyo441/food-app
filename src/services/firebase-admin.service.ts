@@ -1,36 +1,22 @@
-import { Injectable } from '@nestjs/common';
 import * as admin from 'firebase-admin';
+import { Injectable } from '@nestjs/common';
+import * as dotenv from 'dotenv';
+
+dotenv.config();
 
 @Injectable()
 export class FirebaseAdminService {
-  private defaultApp: admin.app.App;
-
   constructor() {
-    this.defaultApp = admin.initializeApp({
-      credential: admin.credential.applicationDefault(),
+    admin.initializeApp({
+      credential: admin.credential.cert({
+        projectId: process.env.FIREBASE_PROJECT_ID,
+        privateKey: process.env.FIREBASE_PRIVATE_KEY.replace(/\\n/g, '\n'),
+        clientEmail: process.env.FIREBASE_CLIENT_EMAIL,
+      }),
     });
   }
 
-  async sendNotification(
-    token: string,
-    title: string,
-    body: string,
-    data: any,
-  ) {
-    const message = {
-      notification: {
-        title,
-        body,
-      },
-      data,
-      token,
-    };
-
-    try {
-      await this.defaultApp.messaging().send(message);
-      console.log('Successfully sent message');
-    } catch (error) {
-      console.error('Error sending message:', error);
-    }
+  getMessaging() {
+    return admin.messaging();
   }
 }

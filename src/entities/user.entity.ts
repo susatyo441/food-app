@@ -3,7 +3,6 @@
 import { Entity, Column, PrimaryGeneratedColumn, OneToMany } from 'typeorm';
 import { Exclude } from 'class-transformer';
 import { IsNotEmpty, IsEmail } from 'class-validator';
-import { Conversation } from './conversation.entity';
 import { Post } from './post.entity';
 import { Transaction } from './transactions.entity';
 import { Notification } from './notification.entity';
@@ -52,6 +51,9 @@ export class User {
   @Exclude({ toPlainOnly: true })
   isDeleted: boolean;
 
+  @Column({ nullable: true })
+  fcmToken: string;
+
   @Column({ type: 'timestamp', default: () => 'CURRENT_TIMESTAMP' }) // Setelah update, kolom ini akan diisi dengan waktu saat itu
   createdAt: Date;
 
@@ -62,14 +64,8 @@ export class User {
   }) // Setelah update, kolom ini akan diisi dengan waktu saat itu
   updatedAt: Date;
 
-  @OneToMany(() => Conversation, (conversation) => conversation.userDonor)
-  donorConversations: Conversation[];
-
   @OneToMany(() => Post, (posts) => posts.user)
   posts: Post[];
-
-  @OneToMany(() => Conversation, (conversation) => conversation.userRecipient)
-  recipientConversations: Conversation[];
 
   @OneToMany(() => Transaction, (transaction) => transaction.userDonor)
   transactionsAsDonor: Transaction[];

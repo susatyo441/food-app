@@ -1,59 +1,55 @@
-// import {
-//   Injectable,
-//   NotFoundException,
-//   UnauthorizedException,
-// } from '@nestjs/common';
-// import { InjectRepository } from '@nestjs/typeorm';
-// import { Repository } from 'typeorm';
-// import { Conversation } from '../entities/conversation.entity';
-// import { User } from '../entities/user.entity';
-// import { UserService } from '../services/user.service';
+import { Injectable } from '@nestjs/common';
+import { InjectRepository } from '@nestjs/typeorm';
+import { Repository } from 'typeorm';
+import { Conversation } from '../entities/conversation.entity';
+import { Message } from '../entities/message.entity';
+import { User } from 'src/entities/user.entity';
 
-// @Injectable()
-// export class ConversationService {
-//   constructor(
-//     @InjectRepository(Conversation)
-//     private readonly conversationRepository: Repository<Conversation>,
-//     private readonly userService: UserService,
-//   ) {}
+@Injectable()
+export class ConversationsService {
+  constructor(
+    @InjectRepository(Conversation)
+    private conversationsRepository: Repository<Conversation>,
+    @InjectRepository(Message)
+    private messagesRepository: Repository<Message>,
+    @InjectRepository(User)
+    private readonly userRepository: Repository<User>,
+  ) {}
 
-//   async findOrCreateConversation(
-//     userDonorId: number,
-//     userRecipientId: number,
-//     sender: User,
-//   ): Promise<Conversation> {
-//     const userDonor = await this.userService.findById(userDonorId);
-//     const userRecipient = await this.userService.findById(userRecipientId);
+  async getUserConversations(userId: number): Promise<any[]> {
+    const user = await this.userRepository.findOne({
+      where: { id: userId },
+    });
+    const conversations = await this.conversationsRepository.find({
+      where: [{ user1: user }, { user2: user }],
+      relations: ['user1', 'user2', 'lastMessage'],
+    });
 
-//     // Check if the sender is the recipient
-//     if (sender.id !== userRecipientId) {
-//       throw new UnauthorizedException(
-//         'Only the recipient can start a conversation',
-//       );
-//     }
+    const results = [];
+    for (const conversation of conversations) {
+      const otherUser =
+        conversation.user1.id === userId
+          ? conversation.user2
+          : conversation.user1;
+      const unreadMessagesCount = await this.messagesRepository.count({
+        where: {
+          receiver: user,
+          sender: otherUser,
+          is_read: false,
+        },
+      });
 
-//     let conversation = await this.conversationRepository.findOne({
-//       where: { userDonor, userRecipient },
-//     });
-
-//     if (!conversation) {
-//       conversation = this.conversationRepository.create({
-//         userDonor,
-//         userRecipient,
-//       });
-//       await this.conversationRepository.save(conversation);
-//     }
-
-//     return conversation;
-//   }
-
-//   async findById(id: number): Promise<Conversation> {
-//     const conversation = await this.conversationRepository.findOne(id, {
-//       relations: ['userDonor', 'userRecipient', 'chats'],
-//     });
-//     if (!conversation) {
-//       throw new NotFoundException('Conversation not found');
-//     }
-//     return conversation;
-//   }
-// }
+      results.push({
+        conversationId: conversation.id,
+        otherUser: {
+          id: otherUser.id,
+          username: otherUser.name,
+        },
+        lastMessage: conversation.lastMessage,
+        unreadMessagesCount,
+        lastUpdate: conversation.last_update,
+      });
+    }
+    return results;
+  }
+}

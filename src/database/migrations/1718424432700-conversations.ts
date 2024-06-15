@@ -5,7 +5,7 @@ import {
   TableForeignKey,
 } from 'typeorm';
 
-export class Conversation1713406026691 implements MigrationInterface {
+export class ConversationsTable1723456789040 implements MigrationInterface {
   public async up(queryRunner: QueryRunner): Promise<void> {
     await queryRunner.createTable(
       new Table({
@@ -18,53 +18,74 @@ export class Conversation1713406026691 implements MigrationInterface {
             isGenerated: true,
             generationStrategy: 'increment',
           },
-          { name: 'user_id_donor', type: 'int' }, // Foreign key column
-          { name: 'user_id_recipient', type: 'int' }, // Foreign key column
+          { name: 'user1_id', type: 'int', isNullable: false }, // Foreign key column
+          { name: 'user2_id', type: 'int', isNullable: false }, // Foreign key column
+          { name: 'last_message_id', type: 'int', isNullable: true }, // Foreign key column
           {
-            name: 'createdAt',
+            name: 'last_update',
             type: 'timestamp',
             default: 'CURRENT_TIMESTAMP',
           },
+        ],
+        uniques: [
           {
-            name: 'updatedAt',
-            type: 'timestamp',
-            default: 'CURRENT_TIMESTAMP',
-            onUpdate: 'CURRENT_TIMESTAMP',
+            name: 'UQ_conversation_users',
+            columnNames: ['user1_id', 'user2_id'],
           },
         ],
       }),
     );
 
     // Foreign key constraints
-    await queryRunner.createForeignKeys('conversations', [
+    await queryRunner.createForeignKey(
+      'conversations',
       new TableForeignKey({
-        columnNames: ['user_id_donor'],
+        columnNames: ['user1_id'],
         referencedColumnNames: ['id'],
         referencedTableName: 'users',
         onDelete: 'CASCADE',
         onUpdate: 'CASCADE',
       }),
+    );
+
+    await queryRunner.createForeignKey(
+      'conversations',
       new TableForeignKey({
-        columnNames: ['user_id_recipient'],
+        columnNames: ['user2_id'],
         referencedColumnNames: ['id'],
         referencedTableName: 'users',
         onDelete: 'CASCADE',
         onUpdate: 'CASCADE',
       }),
-    ]);
+    );
+
+    await queryRunner.createForeignKey(
+      'conversations',
+      new TableForeignKey({
+        columnNames: ['last_message_id'],
+        referencedColumnNames: ['id'],
+        referencedTableName: 'messages',
+        onDelete: 'SET NULL',
+        onUpdate: 'CASCADE',
+      }),
+    );
   }
 
   public async down(queryRunner: QueryRunner): Promise<void> {
     const table = await queryRunner.getTable('conversations');
     const foreignKey1 = table.foreignKeys.find(
-      (fk) => fk.columnNames.indexOf('user_id_donor') !== -1,
+      (fk) => fk.columnNames.indexOf('user1_id') !== -1,
     );
     const foreignKey2 = table.foreignKeys.find(
-      (fk) => fk.columnNames.indexOf('user_id_recipient') !== -1,
+      (fk) => fk.columnNames.indexOf('user2_id') !== -1,
+    );
+    const foreignKey3 = table.foreignKeys.find(
+      (fk) => fk.columnNames.indexOf('last_message_id') !== -1,
     );
 
     await queryRunner.dropForeignKey('conversations', foreignKey1);
     await queryRunner.dropForeignKey('conversations', foreignKey2);
+    await queryRunner.dropForeignKey('conversations', foreignKey3);
 
     await queryRunner.dropTable('conversations');
   }

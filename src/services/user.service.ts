@@ -19,7 +19,14 @@ export class UserService {
   async findById(id: number): Promise<User | null> {
     return this.userRepository.findOneBy({ id });
   }
-
+  async updateFcmToken(userId: number, fcmToken: string): Promise<User> {
+    const user = await this.userRepository.findOneBy({ id: userId });
+    if (!user) {
+      throw new Error('User not found');
+    }
+    user.fcmToken = fcmToken;
+    return this.userRepository.save(user);
+  }
   async findByEmail(email: string): Promise<User | null> {
     const user = await this.userRepository.findOne({
       where: { email },

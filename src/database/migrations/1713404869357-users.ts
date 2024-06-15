@@ -37,6 +37,11 @@ export class Users1713404869357 implements MigrationInterface {
             isNullable: false,
           },
           {
+            name: 'fcmToken',
+            type: 'varchar',
+            isNullable: true,
+          },
+          {
             name: 'createdAt',
             type: 'timestamp',
             default: 'CURRENT_TIMESTAMP',
