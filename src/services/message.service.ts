@@ -54,7 +54,7 @@ export class MessagesService {
       isSentByMe: message.sender.id === userId,
       name: message.sender.name,
       profile_picture: message.sender.profile_picture,
-      file: message.file ? { path: message.file.file_path } : null,
+      file: message.file ? message.file.file_path : null,
     }));
   }
 
@@ -123,9 +123,7 @@ export class MessagesService {
           profile_picture:
             sender.profile_picture ||
             'https://static.vecteezy.com/system/resources/previews/026/630/551/original/profile-icon-symbol-design-illustration-vector.jpg',
-          file: savedMessage.file
-            ? JSON.stringify({ path: savedMessage.file.file_path })
-            : '',
+          file: savedMessage?.file ? savedMessage.file.file_path : '',
         },
         token: receiver.fcmToken,
       };
@@ -136,7 +134,7 @@ export class MessagesService {
     return {
       id: savedMessage.id,
       message: savedMessage.message,
-      file: savedMessage.file ? { path: savedMessage.file.file_path } : null,
+      file: savedMessage?.file ? savedMessage.file.file_path : null,
       sender: {
         id: sender.id,
         username: sender.name,
