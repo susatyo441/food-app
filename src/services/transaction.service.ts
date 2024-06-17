@@ -12,6 +12,7 @@ import { Variant } from '../entities/variant.entity';
 import { Post } from '../entities/post.entity';
 import { NotificationService } from './notification.service';
 import { User } from 'src/entities/user.entity';
+import { FirebaseAdminService } from './firebase-admin.service';
 
 @Injectable()
 export class TransactionService {
@@ -25,6 +26,7 @@ export class TransactionService {
     private readonly notificationService: NotificationService,
     @InjectRepository(User)
     private readonly userRepository: Repository<User>,
+    private firebaseAdminService: FirebaseAdminService,
   ) {}
 
   async create(
@@ -141,7 +143,7 @@ export class TransactionService {
       await this.variantRepository.save(variant);
     }
 
-    await this.notificationService.createNotification(
+    const notification = await this.notificationService.createNotification(
       post.user,
       'Penerima baru untuk donasi Anda',
       `Seorang penerima telah mengkonfirmasi akan mengambil ${post.title} Anda dengan jumlah: ${createTransactionDto.detail
@@ -153,6 +155,28 @@ export class TransactionService {
       recipientUser.name,
       savedTransaction.id,
     );
+
+    if (post.user.fcmToken) {
+      const payload = {
+        notification: {
+          title: `Penerima baru untuk donasi Anda`,
+          body: `Seorang penerima telah mengkonfirmasi akan mengambil ${post.title} Anda.`,
+        },
+        data: {
+          id: notification.id.toString(),
+          title: `Penerima baru untuk donasi Anda`,
+          createdAt: notification.createdAt.toISOString(),
+          isRead: notification.isRead.toString(),
+          transaction_id: savedTransaction.id.toString() || '',
+          name: recipientUser.name,
+          message: `Seorang penerima telah mengkonfirmasi akan mengambil ${post.title} Anda`,
+          type: 'donation',
+        },
+        token: post.user.fcmToken,
+      };
+
+      this.firebaseAdminService.getMessaging().send(payload);
+    }
 
     return savedTransaction;
   }
@@ -197,13 +221,35 @@ export class TransactionService {
     const savedTransaction = await this.transactionRepository.save(transaction);
 
     // Create notification for the donor
-    await this.notificationService.createNotification(
+    const notification = await this.notificationService.createNotification(
       transaction.userDonor,
       'Pengambilan Dikonfirmasi',
       `Review: ${confirmPengambilanDto.review}/5, Comment: ${confirmPengambilanDto.comment}`,
       transaction.userRecipient.name,
       transaction.id,
     );
+
+    if (transaction.userDonor.fcmToken) {
+      const payload = {
+        notification: {
+          title: `Donasi anda telah diambil`,
+          body: `Pengambilan donasi anda "${transaction.post.title}" telah diambil oleh ${transaction.userRecipient.name}.`,
+        },
+        data: {
+          id: notification.id.toString(),
+          title: `Donasi anda telah diambil`,
+          createdAt: notification.createdAt.toISOString(),
+          isRead: notification.isRead.toString(),
+          transaction_id: transaction.id.toString() || '',
+          name: transaction.userRecipient.name,
+          message: `Pengambilan donasi anda "${transaction.post.title}" telah diambil oleh ${transaction.userRecipient.name}.`,
+          type: 'donation',
+        },
+        token: transaction.userDonor.fcmToken,
+      };
+
+      this.firebaseAdminService.getMessaging().send(payload);
+    }
 
     return savedTransaction;
   }
@@ -254,13 +300,35 @@ export class TransactionService {
     }
 
     // Notify the user donor about the cancellation
-    await this.notificationService.createNotification(
+    const notification = await this.notificationService.createNotification(
       transaction.userDonor,
       'Transaksi telah dibatalkan',
       `Transaksi Anda dengan judul "${transaction.post.title}" telah dibatalkan oleh penerima.`,
       transaction.userRecipient.name,
       transaction.id,
     );
+
+    if (transaction.userDonor.fcmToken) {
+      const payload = {
+        notification: {
+          title: `Transaksi telah dibatalkan`,
+          body: `Transaksi Anda dengan judul "${transaction.post.title}" telah dibatalkan oleh ${transaction.userRecipient.name}.`,
+        },
+        data: {
+          id: notification.id.toString(),
+          title: `Transaksi telah dibatalkan`,
+          createdAt: notification.createdAt.toISOString(),
+          isRead: notification.isRead.toString(),
+          transaction_id: transaction.id.toString() || '',
+          name: transaction.userRecipient.name,
+          message: `Transaksi Anda dengan judul "${transaction.post.title}" telah dibatalkan oleh ${transaction.userRecipient.name}.`,
+          type: 'donation',
+        },
+        token: transaction.userDonor.fcmToken,
+      };
+
+      this.firebaseAdminService.getMessaging().send(payload);
+    }
 
     // Remove the transaction
     await this.transactionRepository.remove(transaction);

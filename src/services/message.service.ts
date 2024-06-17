@@ -110,7 +110,7 @@ export class MessagesService {
     if (receiver.fcmToken) {
       const payload = {
         notification: {
-          title: `New message from ${sender.name}`,
+          title: `Ada pesan baru dari ${sender.name}`,
           body: messageText || 'You received a new file',
         },
         data: {
@@ -124,6 +124,8 @@ export class MessagesService {
             sender.profile_picture ||
             'https://static.vecteezy.com/system/resources/previews/026/630/551/original/profile-icon-symbol-design-illustration-vector.jpg',
           file: savedMessage?.file ? savedMessage.file.file_path : '',
+          type: 'message',
+          userId: senderId.toString(),
         },
         token: receiver.fcmToken,
       };

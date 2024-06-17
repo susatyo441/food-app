@@ -28,15 +28,6 @@ export class NotificationService {
       data: { transaction_id, message },
       isRead: false,
     });
-    //future use
-    // if (user.firebaseToken) {
-    //   await this.firebaseAdminService.sendNotification(
-    //     user.firebaseToken,
-    //     name,
-    //     message,
-    //     { transactionId: transaction_id?.toString() ?? '0' },
-    //   );
-    // }
 
     return await this.notificationRepository.save(notification);
   }
