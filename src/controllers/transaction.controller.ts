@@ -8,6 +8,7 @@ import {
   Param,
   Get,
   Query,
+  NotFoundException,
 } from '@nestjs/common';
 import { AuthGuard } from '../guard/auth.guard';
 import { TransactionService } from '../services/transaction.service';
@@ -59,5 +60,16 @@ export class TransactionController {
     @Query() filterDto: GetTransactionsFilterDto,
   ): Promise<any[]> {
     return this.transactionService.getUserTransactions(req.user.id, filterDto);
+  }
+
+  @Get('donor/:id')
+  async getTransactionDetail(@Param('id') id: number, @Req() req) {
+    const transactionDetail =
+      await this.transactionService.getTransactionDetail(id, req.user.id);
+    if (!transactionDetail) {
+      // Handle jika transaksi tidak ditemukan
+      throw new NotFoundException('Transaction not found');
+    }
+    return transactionDetail;
   }
 }

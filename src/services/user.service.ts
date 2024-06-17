@@ -35,6 +35,25 @@ export class UserService {
     return user;
   }
 
+  async updateProfilePicture(
+    user: User,
+    newProfilePictureUrl: string,
+  ): Promise<void> {
+    user.profile_picture = newProfilePictureUrl;
+    await this.userRepository.save(user);
+  }
+
+  async updateName(id: number, name: string): Promise<User> {
+    const user = await this.userRepository.findOne({ where: { id } });
+    if (!user) {
+      throw new NotFoundException('User not found');
+    }
+
+    user.name = name; // Update nama pengguna
+
+    return this.userRepository.save(user);
+  }
+
   async findByEmailWithPassword(email: string): Promise<User | null> {
     const user = this.userRepository.findOne({
       where: { email },

@@ -424,4 +424,39 @@ export class TransactionService {
       };
     });
   }
+
+  async getTransactionDetail(id: number, userId: number) {
+    const userDonor = await this.userRepository.findOne({
+      where: { id: userId },
+    });
+    const transaction = await this.transactionRepository.findOne({
+      where: { id, userDonor },
+      relations: ['userRecipient', 'post', 'post.variants'], // Load relasi yang diperlukan
+    });
+
+    if (!transaction) {
+      return null; // Transaksi tidak ditemukan
+    }
+
+    const variantsWithJumlah = transaction.post.variants
+      .filter((variant) => transaction.detail.variant_id.includes(variant.id)) // Filter varian berdasarkan variant_id
+      .map((variant) => ({
+        name: variant.name,
+        jumlah:
+          transaction.detail.jumlah[
+            transaction.detail.variant_id.indexOf(variant.id)
+          ],
+      }));
+
+    return {
+      transaction_id: transaction.id,
+      user_recipient_id: transaction.userRecipient.id,
+      user_recipient_profile_picture: transaction.userRecipient.profile_picture,
+      user_recipient_name: transaction.userRecipient.name,
+      transaction_timeline: transaction.timeline,
+      variant: variantsWithJumlah,
+      post_title: transaction.post.title,
+      post_alamat: transaction.post.body.alamat,
+    };
+  }
 }
