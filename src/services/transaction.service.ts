@@ -32,7 +32,7 @@ export class TransactionService {
   async create(
     createTransactionDto: CreateTransactionDto,
     userId: number,
-  ): Promise<Transaction> {
+  ): Promise<any> {
     const now = new Date();
 
     // Check if the user has an ongoing transaction
@@ -175,7 +175,22 @@ export class TransactionService {
         token: post.user.fcmToken,
       };
 
-      this.firebaseAdminService.getMessaging().send(payload);
+      try {
+        await this.firebaseAdminService.getMessaging().send(payload);
+      } catch (error) {
+        if (
+          error.code === 'messaging/invalid-recipient' ||
+          error.code === 'messaging/registration-token-not-registered'
+        ) {
+          // Handle invalid token error
+          console.log('Invalid FCM token:', error.message);
+          return { success: false, error: 'Invalid FCM token' };
+        } else {
+          // Handle other errors
+          console.log('FCM send error:', error.message);
+          return { success: false, error: 'Failed to send notification' };
+        }
+      }
     }
 
     return savedTransaction;
@@ -184,7 +199,7 @@ export class TransactionService {
   async confirmPengambilan(
     confirmPengambilanDto: ConfirmPengambilanDto,
     userId: number,
-  ): Promise<Transaction> {
+  ): Promise<any> {
     const now = new Date();
 
     const transaction = await this.transactionRepository.findOne({
@@ -248,16 +263,28 @@ export class TransactionService {
         token: transaction.userDonor.fcmToken,
       };
 
-      this.firebaseAdminService.getMessaging().send(payload);
+      try {
+        await this.firebaseAdminService.getMessaging().send(payload);
+      } catch (error) {
+        if (
+          error.code === 'messaging/invalid-recipient' ||
+          error.code === 'messaging/registration-token-not-registered'
+        ) {
+          // Handle invalid token error
+          console.log('Invalid FCM token:', error.message);
+          return { success: false, error: 'Invalid FCM token' };
+        } else {
+          // Handle other errors
+          console.log('FCM send error:', error.message);
+          return { success: false, error: 'Failed to send notification' };
+        }
+      }
     }
 
     return savedTransaction;
   }
 
-  async cancelTransaction(
-    transactionId: number,
-    userId: number,
-  ): Promise<{ message: string }> {
+  async cancelTransaction(transactionId: number, userId: number): Promise<any> {
     const transaction = await this.transactionRepository.findOne({
       where: { id: transactionId },
       relations: ['userRecipient', 'userDonor', 'post'],
@@ -327,7 +354,22 @@ export class TransactionService {
         token: transaction.userDonor.fcmToken,
       };
 
-      this.firebaseAdminService.getMessaging().send(payload);
+      try {
+        await this.firebaseAdminService.getMessaging().send(payload);
+      } catch (error) {
+        if (
+          error.code === 'messaging/invalid-recipient' ||
+          error.code === 'messaging/registration-token-not-registered'
+        ) {
+          // Handle invalid token error
+          console.log('Invalid FCM token:', error.message);
+          return { success: false, error: 'Invalid FCM token' };
+        } else {
+          // Handle other errors
+          console.log('FCM send error:', error.message);
+          return { success: false, error: 'Failed to send notification' };
+        }
+      }
     }
 
     // Remove the transaction
@@ -417,6 +459,15 @@ export class TransactionService {
             ? 'ongoing'
             : 'completed',
         detail: variantDetails,
+        postBody: transaction.post.body,
+        otherUserName:
+          transaction.userDonor.id === userId
+            ? transaction.userRecipient.name
+            : transaction.userDonor.name,
+        otherUserId:
+          transaction.userDonor.id === userId
+            ? transaction.userRecipient.id
+            : transaction.userDonor.id,
         review: transaction.detail.review ?? null, // Add review
         timeline: transaction.timeline,
         createdAt: transaction.createdAt,
