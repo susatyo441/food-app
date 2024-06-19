@@ -123,14 +123,29 @@ export class MessagesService {
           profile_picture:
             sender.profile_picture ||
             'https://static.vecteezy.com/system/resources/previews/026/630/551/original/profile-icon-symbol-design-illustration-vector.jpg',
-          file: savedMessage?.file ? savedMessage.file.file_path : '',
+          file: mediaUrl ? mediaUrl : '',
           type: 'message',
           userId: senderId.toString(),
         },
         token: receiver.fcmToken,
       };
 
-      this.firebaseAdminService.getMessaging().send(payload);
+      try {
+        await this.firebaseAdminService.getMessaging().send(payload);
+      } catch (error) {
+        if (
+          error.code === 'messaging/invalid-recipient' ||
+          error.code === 'messaging/registration-token-not-registered'
+        ) {
+          // Handle invalid token error
+          console.log('Invalid FCM token:', error.message);
+          return { success: false, error: 'Invalid FCM token' };
+        } else {
+          // Handle other errors
+          console.log('FCM send error:', error.message);
+          return { success: false, error: 'Failed to send notification' };
+        }
+      }
     }
 
     return {

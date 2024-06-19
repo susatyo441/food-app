@@ -44,12 +44,20 @@ export class ConversationsService {
         otherUser: {
           id: otherUser.id,
           username: otherUser.name,
+          profile_picture: otherUser.profile_picture,
         },
         lastMessage: conversation.lastMessage,
         unreadMessagesCount,
         lastUpdate: conversation.last_update,
       });
     }
+
+    // Sort the results based on lastUpdate in descending order
+    results.sort(
+      (a, b) =>
+        new Date(b.lastUpdate).getTime() - new Date(a.lastUpdate).getTime(),
+    );
+
     return results;
   }
 }
