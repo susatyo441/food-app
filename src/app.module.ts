@@ -45,6 +45,9 @@ import { Points } from './entities/point.entity';
 import { ExtendService } from './services/extend.service';
 import { PointService } from './services/point.service';
 import { PointController } from './controllers/point.controller';
+import { Recipe } from './entities/recipe.entity';
+import { RecipeService } from './services/recipe.service';
+import { RecipeController } from './controllers/recipe.controller';
 
 @Module({
   imports: [
@@ -62,6 +65,7 @@ import { PointController } from './controllers/point.controller';
       Conversation,
       Extend,
       Points,
+      Recipe,
     ]),
     ConfigModule.forRoot({
       isGlobal: true,
@@ -97,6 +101,7 @@ import { PointController } from './controllers/point.controller';
     ConversationsService,
     ExtendService,
     PointService,
+    RecipeService,
     ...postProviders,
   ],
   controllers: [
@@ -110,6 +115,7 @@ import { PointController } from './controllers/point.controller';
     ConversationsController,
     MessagesController,
     PointController,
+    RecipeController,
   ],
   exports: [TypeOrmModule],
 })
