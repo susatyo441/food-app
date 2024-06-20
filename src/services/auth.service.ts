@@ -6,12 +6,14 @@ import { UserService } from './user.service';
 import { RegisterDto, LoginDto } from '../dto/auth.dto';
 import { User } from '../entities/user.entity';
 import * as bcrypt from 'bcrypt';
+import { PointService } from './point.service';
 
 @Injectable()
 export class AuthService {
   constructor(
     private readonly userService: UserService,
     private readonly jwtService: JwtService,
+    private readonly pointService: PointService,
   ) {}
 
   async register(
@@ -29,8 +31,9 @@ export class AuthService {
       email: userData.email,
       password: hashedPassword,
       gender: userData.gender,
-      profile_picture: urlPhoto, // Save the path of the uploaded file
+      profile_picture: urlPhoto,
     });
+    await this.pointService.createPoints(newUser);
 
     const token = await this.generateToken(newUser.email);
     return { user: newUser, token };

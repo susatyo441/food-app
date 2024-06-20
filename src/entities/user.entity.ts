@@ -1,11 +1,19 @@
 // src/models/user.model.ts
 
-import { Entity, Column, PrimaryGeneratedColumn, OneToMany } from 'typeorm';
+import {
+  Entity,
+  Column,
+  PrimaryGeneratedColumn,
+  OneToMany,
+  OneToOne,
+} from 'typeorm';
 import { Exclude } from 'class-transformer';
 import { IsNotEmpty, IsEmail } from 'class-validator';
 import { Post } from './post.entity';
 import { Transaction } from './transactions.entity';
 import { Notification } from './notification.entity';
+import { Points } from './point.entity';
+import { Extend } from './extend.entity';
 
 export enum Gender {
   l = 'l',
@@ -75,4 +83,10 @@ export class User {
 
   @OneToMany(() => Transaction, (transaction) => transaction.userRecipient)
   transactionsAsRecipient: Transaction[];
+
+  @OneToOne(() => Points, (points) => points.user)
+  points: Points;
+
+  @OneToMany(() => Extend, (extend) => extend.user)
+  extend: Extend[];
 }

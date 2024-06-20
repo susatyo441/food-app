@@ -11,6 +11,7 @@ import { getRepositoryToken } from '@nestjs/typeorm';
 import { NotificationService } from 'src/services/notification.service';
 import { Notification } from 'src/entities/notification.entity';
 import { Transaction } from 'src/entities/transactions.entity';
+import { Extend } from 'src/entities/extend.entity';
 
 export const postProviders: Provider[] = [
   {
@@ -23,6 +24,7 @@ export const postProviders: Provider[] = [
       categoryRepository: Repository<Category>,
       notificationService: NotificationService,
       transactionRepository: Repository<Transaction>,
+      extendRepository: Repository<Extend>,
     ) => {
       return {
         postRepository,
@@ -32,6 +34,7 @@ export const postProviders: Provider[] = [
         categoryRepository,
         notificationService,
         transactionRepository,
+        extendRepository,
       };
     },
     inject: [
@@ -42,6 +45,7 @@ export const postProviders: Provider[] = [
       getRepositoryToken(Category),
       getRepositoryToken(Notification),
       getRepositoryToken(Transaction),
+      getRepositoryToken(Extend),
     ],
   },
 ];

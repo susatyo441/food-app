@@ -1,6 +1,6 @@
 import { Injectable, BadRequestException } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
-import { Repository } from 'typeorm';
+import { Raw, Repository } from 'typeorm';
 import { Transaction } from '../entities/transactions.entity';
 import {
   ConfirmPengambilanDto,
@@ -13,6 +13,8 @@ import { Post } from '../entities/post.entity';
 import { NotificationService } from './notification.service';
 import { User } from 'src/entities/user.entity';
 import { FirebaseAdminService } from './firebase-admin.service';
+import { ExtendService } from './extend.service';
+import { PointService } from './point.service';
 
 @Injectable()
 export class TransactionService {
@@ -26,9 +28,12 @@ export class TransactionService {
     private readonly notificationService: NotificationService,
     @InjectRepository(User)
     private readonly userRepository: Repository<User>,
+    private extendService: ExtendService,
     private firebaseAdminService: FirebaseAdminService,
+    private pointService: PointService,
   ) {}
 
+  private readonly maksimal_pengambilan = 3;
   async create(
     createTransactionDto: CreateTransactionDto,
     userId: number,
@@ -114,6 +119,29 @@ export class TransactionService {
 
     if (!recipientUser) {
       throw new BadRequestException('Recipient user not found');
+    }
+    const startOfDay = new Date();
+    startOfDay.setHours(0, 0, 0, 0);
+
+    const endOfDay = new Date();
+    endOfDay.setHours(23, 59, 59, 999);
+    const extendCount = await this.extendService.countValidExtends(userId);
+
+    const max_pengambilan = this.maksimal_pengambilan + extendCount;
+    const count_pengambilan = await this.transactionRepository.count({
+      where: {
+        userRecipient: { id: userId },
+        createdAt: Raw(
+          (alias) =>
+            `${alias} BETWEEN '${startOfDay.toISOString()}' AND '${endOfDay.toISOString()}'`,
+        ),
+      },
+    });
+
+    if (max_pengambilan <= count_pengambilan) {
+      throw new BadRequestException(
+        'Hari ini anda sudah mencapai maksimal pengambilan',
+      );
     }
 
     // Create transaction object
@@ -204,7 +232,7 @@ export class TransactionService {
 
     const transaction = await this.transactionRepository.findOne({
       where: { id: confirmPengambilanDto.transactionId },
-      relations: ['userRecipient', 'userDonor'],
+      relations: ['userRecipient', 'userDonor', 'post'],
     });
 
     if (!transaction) {
@@ -243,7 +271,10 @@ export class TransactionService {
       transaction.userRecipient.name,
       transaction.id,
     );
-
+    await this.pointService.tambahPoint(
+      transaction.userDonor,
+      confirmPengambilanDto.review,
+    );
     if (transaction.userDonor.fcmToken) {
       const payload = {
         notification: {
@@ -262,9 +293,19 @@ export class TransactionService {
         },
         token: transaction.userDonor.fcmToken,
       };
-
+      const payloadPoint = {
+        notification: {
+          title: `Poin anda bertambah!`,
+          body: `Selamat anda  mendapatkan tambahan "${confirmPengambilanDto.review}" poin dari donasi yang telah Anda lakukan.`,
+        },
+        data: {
+          type: 'donation',
+        },
+        token: transaction.userDonor.fcmToken,
+      };
       try {
         await this.firebaseAdminService.getMessaging().send(payload);
+        await this.firebaseAdminService.getMessaging().send(payloadPoint);
       } catch (error) {
         if (
           error.code === 'messaging/invalid-recipient' ||

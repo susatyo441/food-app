@@ -40,6 +40,11 @@ import { ConversationsService } from './services/conversation.service';
 import { File } from './entities/file.entity';
 import { Message } from './entities/message.entity';
 import { Conversation } from './entities/conversation.entity';
+import { Extend } from './entities/extend.entity';
+import { Points } from './entities/point.entity';
+import { ExtendService } from './services/extend.service';
+import { PointService } from './services/point.service';
+import { PointController } from './controllers/point.controller';
 
 @Module({
   imports: [
@@ -55,6 +60,8 @@ import { Conversation } from './entities/conversation.entity';
       File,
       Message,
       Conversation,
+      Extend,
+      Points,
     ]),
     ConfigModule.forRoot({
       isGlobal: true,
@@ -88,6 +95,8 @@ import { Conversation } from './entities/conversation.entity';
     FirebaseAdminService,
     MessagesService,
     ConversationsService,
+    ExtendService,
+    PointService,
     ...postProviders,
   ],
   controllers: [
@@ -100,6 +109,7 @@ import { Conversation } from './entities/conversation.entity';
     NotificationController,
     ConversationsController,
     MessagesController,
+    PointController,
   ],
   exports: [TypeOrmModule],
 })

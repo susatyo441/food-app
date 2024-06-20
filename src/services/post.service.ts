@@ -18,6 +18,7 @@ import { id } from 'date-fns/locale';
 import { NotificationService } from './notification.service';
 import { User } from 'src/entities/user.entity';
 import { Transaction } from 'src/entities/transactions.entity';
+import { ExtendService } from './extend.service';
 
 @Injectable()
 export class PostService {
@@ -32,8 +33,10 @@ export class PostService {
       transactionRepository: Repository<Transaction>;
     },
     private readonly notificationService: NotificationService,
+    private extendService: ExtendService,
   ) {}
 
+  private readonly maksimal_pengambilan = 3;
   async create(
     postData: CreatePostDto,
     userId: number,
@@ -547,6 +550,29 @@ export class PostService {
         new Date(transaction.detail.maks_pengambilan) > now,
     );
 
+    // Get count of extends for the user
+    const extendCount = await this.extendService.countValidExtends(userId);
+
+    const max_pengambilan = this.maksimal_pengambilan + extendCount;
+
+    // Get count of transactions for the user on the current day
+    const startOfDay = new Date();
+    startOfDay.setHours(0, 0, 0, 0);
+
+    const endOfDay = new Date();
+    endOfDay.setHours(23, 59, 59, 999);
+
+    const count_pengambilan =
+      await this.repositories.transactionRepository.count({
+        where: {
+          userRecipient: { id: userId },
+          createdAt: Raw(
+            (alias) =>
+              `${alias} BETWEEN '${startOfDay.toISOString()}' AND '${endOfDay.toISOString()}'`,
+          ),
+        },
+      });
+
     return {
       id: post.id,
       title: post.title,
@@ -587,6 +613,8 @@ export class PostService {
         id: media.id,
         url: media.url,
       })),
+      max_pengambilan: max_pengambilan,
+      sisa_pengambilan: max_pengambilan - count_pengambilan,
     };
   }
 }
