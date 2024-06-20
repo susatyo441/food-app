@@ -49,13 +49,16 @@ export class NotificationService {
       order: { createdAt: 'DESC' },
     });
 
-    // Mark notifications as read
-    for (const notification of notifications) {
-      notification.isRead = true;
-    }
+    // Create a deep copy of the notifications
+    const notificationsToUpdate = notifications.map((notification) => ({
+      ...notification,
+      isRead: true,
+    }));
 
-    await this.notificationRepository.save(notifications);
+    // Save the copied notifications with isRead set to true
+    await this.notificationRepository.save(notificationsToUpdate);
 
+    // Return the original notifications
     return notifications;
   }
 }
