@@ -28,6 +28,9 @@ export class Inventory {
   @Column({ default: false })
   isNotify: boolean;
 
+  @Column({ default: false })
+  isPreNotify: boolean;
+
   @ManyToOne(() => User, (user) => user.inventories, { onDelete: 'CASCADE' })
   user: User;
 

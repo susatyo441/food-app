@@ -34,6 +34,12 @@ export class CreateInventoryTable1987933023561 implements MigrationInterface {
             isNullable: false,
           },
           {
+            name: 'isPreNotify',
+            type: 'boolean',
+            default: false,
+            isNullable: false,
+          },
+          {
             name: 'expiredAt',
             type: 'timestamp',
           },
