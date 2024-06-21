@@ -15,6 +15,7 @@ import { Notification } from './notification.entity';
 import { Points } from './point.entity';
 import { Extend } from './extend.entity';
 import { Recipe } from './recipe.entity';
+import { Inventory } from './inventory.entity';
 
 export enum Gender {
   l = 'l',
@@ -92,4 +93,7 @@ export class User {
   extend: Extend[];
   @OneToMany(() => Recipe, (recipe) => recipe.user)
   recipes: Recipe[];
+
+  @OneToMany(() => Inventory, (inventory) => inventory.user)
+  inventories: Inventory[];
 }

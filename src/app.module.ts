@@ -48,6 +48,10 @@ import { PointController } from './controllers/point.controller';
 import { Recipe } from './entities/recipe.entity';
 import { RecipeService } from './services/recipe.service';
 import { RecipeController } from './controllers/recipe.controller';
+import { ScheduleModule } from '@nestjs/schedule';
+import { InventoryService } from './services/inventory.service';
+import { Inventory } from './entities/inventory.entity';
+import { InventoryController } from './controllers/inventory.controller';
 
 @Module({
   imports: [
@@ -66,7 +70,9 @@ import { RecipeController } from './controllers/recipe.controller';
       Extend,
       Points,
       Recipe,
+      Inventory,
     ]),
+    ScheduleModule.forRoot(),
     ConfigModule.forRoot({
       isGlobal: true,
       load: [typeorm],
@@ -102,6 +108,7 @@ import { RecipeController } from './controllers/recipe.controller';
     ExtendService,
     PointService,
     RecipeService,
+    InventoryService,
     ...postProviders,
   ],
   controllers: [
@@ -116,6 +123,7 @@ import { RecipeController } from './controllers/recipe.controller';
     MessagesController,
     PointController,
     RecipeController,
+    InventoryController,
   ],
   exports: [TypeOrmModule],
 })

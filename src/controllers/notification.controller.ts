@@ -1,4 +1,4 @@
-import { Body, Controller, Get, Post, Req, UseGuards } from '@nestjs/common';
+import { Controller, Get, Req, UseGuards } from '@nestjs/common';
 import { NotificationService } from '../services/notification.service';
 import { AuthGuard } from 'src/guard/auth.guard';
 
