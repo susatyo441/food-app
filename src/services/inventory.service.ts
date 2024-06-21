@@ -5,7 +5,7 @@ import { Inventory } from '../entities/inventory.entity';
 import { User } from '../entities/user.entity';
 import { FirebaseAdminService } from './firebase-admin.service';
 import { Cron, CronExpression } from '@nestjs/schedule';
-import { format, subHours } from 'date-fns';
+import { differenceInHours, format, subHours, toDate } from 'date-fns';
 import { toZonedTime } from 'date-fns-tz';
 import { id } from 'date-fns/locale/id';
 import * as fs from 'fs';
@@ -119,9 +119,13 @@ export class InventoryService {
       await this.inventoryRepository.save(inventory);
 
       if (inventory.user.fcmToken) {
+        const hoursUntilExpired = differenceInHours(
+          toDate(inventory.expiredAt),
+          nowZoned,
+        );
         const payload = {
           notification: {
-            title: `${inventory.name} Anda akan kadaluwarsa dalam 8 jam!`,
+            title: `${inventory.name} Anda akan kadaluwarsa dalam ${hoursUntilExpired} jam!`,
             body: `${inventory.name} akan kadaluwarsa pada ${formatExpiredAt(inventory.expiredAt)}`,
           },
           data: {
