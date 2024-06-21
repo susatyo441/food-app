@@ -59,7 +59,10 @@ export class UserController {
         },
         filename: (req, file, cb) => {
           const uniqueSuffix = uuidv4();
-          const fileExtension = mime.extension(file.mimetype) || 'jpeg';
+          let fileExtension = mime.extension(file.mimetype);
+          if (fileExtension === 'bin') {
+            fileExtension = 'jpg'; // Rename bin to jpg
+          }
           const randomFilename = `${uniqueSuffix}.${fileExtension}`;
           cb(null, randomFilename);
         },

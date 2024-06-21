@@ -75,7 +75,7 @@ export class InventoryController {
     return this.inventoryService.getInventories(userId);
   }
 
-  @Get(':id')
+  @Get('find/:id')
   async findInventoryById(
     @Req() req,
     @Param('id') id: number,
@@ -84,20 +84,44 @@ export class InventoryController {
     return this.inventoryService.findInventoryById(userId, id);
   }
 
-  @Put(':id/quantity')
+  @Put('update/:id')
   async updateQuantity(
     @Req() req,
     @Param('id') id: number,
     @Body('quantity') quantity: number,
+    @Body('expiredAt') expiredAt: Date,
   ): Promise<Inventory> {
     const userId = req.user.id; // Assuming user id is stored in request
-    return this.inventoryService.updateQuantity(userId, id, quantity);
+    return this.inventoryService.updateQuantity(
+      userId,
+      id,
+      quantity,
+      expiredAt,
+    );
   }
 
-  @Delete(':id')
+  @Delete('delete/:id')
   async deleteInventory(@Req() req, @Param('id') id: number): Promise<any> {
     const userId = req.user.id; // Assuming user id is stored in request
     await this.inventoryService.deleteInventory(userId, id);
     return { success: true, message: 'Berhasil hapus inventory' };
+  }
+
+  @Get('/expired')
+  async getExpiredInventories(@Req() req): Promise<Inventory[]> {
+    const userId = req.user.id;
+    return this.inventoryService.getExpiredInventories(userId);
+  }
+
+  @Get('/zero-quantity')
+  async getInventoriesWithZeroQuantity(@Req() req): Promise<Inventory[]> {
+    const userId = req.user.id;
+    return this.inventoryService.getInventoriesWithZeroQuantity(userId);
+  }
+
+  @Get('/valid')
+  async getValidInventories(@Req() req): Promise<Inventory[]> {
+    const userId = req.user.id;
+    return this.inventoryService.getValidInventories(userId);
   }
 }

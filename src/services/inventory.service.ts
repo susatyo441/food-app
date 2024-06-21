@@ -1,6 +1,6 @@
 import { Injectable, NotFoundException } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
-import { LessThan, Repository } from 'typeorm';
+import { LessThan, MoreThan, Repository } from 'typeorm';
 import { Inventory } from '../entities/inventory.entity';
 import { User } from '../entities/user.entity';
 import { FirebaseAdminService } from './firebase-admin.service';
@@ -111,9 +111,11 @@ export class InventoryService {
     userId: number,
     id: number,
     quantity: number,
+    expiredAt: Date,
   ): Promise<Inventory> {
     const inventory = await this.findInventoryById(userId, id);
     inventory.quantity = quantity;
+    inventory.expiredAt = expiredAt;
     return this.inventoryRepository.save(inventory);
   }
 
@@ -129,5 +131,30 @@ export class InventoryService {
       }
     }
     await this.inventoryRepository.remove(inventory);
+  }
+
+  async getExpiredInventories(userId: number): Promise<Inventory[]> {
+    const now = new Date();
+    return this.inventoryRepository.find({
+      where: { user: { id: userId }, expiredAt: LessThan(now) },
+    });
+  }
+
+  async getInventoriesWithZeroQuantity(userId: number): Promise<Inventory[]> {
+    return this.inventoryRepository.find({
+      where: { user: { id: userId }, quantity: 0 },
+    });
+  }
+
+  async getValidInventories(userId: number): Promise<Inventory[]> {
+    const now = new Date();
+    return this.inventoryRepository.find({
+      where: {
+        user: { id: userId },
+        quantity: MoreThan(0),
+        expiredAt: MoreThan(now),
+      },
+      order: { createdAt: 'DESC' },
+    });
   }
 }
