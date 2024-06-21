@@ -19,4 +19,12 @@ export class NotificationController {
   //     await this.notificationService.registerToken(userId, token);
   //     return { message: 'Token registered successfully' };
   //   }
+
+  @Get('unread-check')
+  async checkUnreadNotifications(@Req() req): Promise<{ hasUnread: boolean }> {
+    const hasUnread = await this.notificationService.checkUnreadNotifications(
+      req.user.id,
+    );
+    return { hasUnread };
+  }
 }

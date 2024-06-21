@@ -61,4 +61,11 @@ export class NotificationService {
     // Return the original notifications
     return notifications;
   }
+
+  async checkUnreadNotifications(userId: number): Promise<boolean> {
+    const count = await this.notificationRepository.count({
+      where: { user: { id: userId }, isRead: false },
+    });
+    return count > 0;
+  }
 }
