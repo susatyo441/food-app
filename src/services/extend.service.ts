@@ -4,14 +4,16 @@ import {
   BadRequestException,
 } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
-import { MoreThan, Repository } from 'typeorm';
+import { MoreThan, Raw, Repository } from 'typeorm';
 import { Extend } from '../entities/extend.entity';
 import { Points } from '../entities/point.entity';
 import { User } from '../entities/user.entity';
+import { Transaction } from 'src/entities/transactions.entity';
 
 @Injectable()
 export class ExtendService {
   private readonly maxPointsPerExtend = 100;
+  private readonly maksimal_pengambilan = 3;
 
   constructor(
     @InjectRepository(Extend)
@@ -20,6 +22,8 @@ export class ExtendService {
     private readonly pointRepository: Repository<Points>,
     @InjectRepository(User)
     private readonly userRepository: Repository<User>,
+    @InjectRepository(Transaction)
+    private readonly transactionRepository: Repository<Transaction>,
   ) {}
 
   async createExtend(userId: number, amount: number): Promise<any> {
@@ -48,11 +52,12 @@ export class ExtendService {
     });
   }
 
-  async getExtends(userId: number): Promise<Extend[]> {
-    return await this.extendRepository.find({
-      where: { user: { id: userId } },
-      relations: ['user'],
-    });
+  async getExtends(userId: number): Promise<any> {
+    return (
+      (await this.extendRepository.count({
+        where: { user: { id: userId } },
+      })) + this.maksimal_pengambilan
+    );
   }
 
   async deleteExtend(userId: number, extendId: number): Promise<void> {
@@ -73,5 +78,30 @@ export class ExtendService {
         expiredAt: MoreThan(now),
       },
     });
+  }
+
+  async countValidExtend(userId: number): Promise<any> {
+    const startOfDay = new Date();
+    startOfDay.setHours(0, 0, 0, 0);
+
+    const endOfDay = new Date();
+    endOfDay.setHours(23, 59, 59, 999);
+    const count_pengambilan = await this.transactionRepository.count({
+      where: {
+        userRecipient: { id: userId },
+        createdAt: Raw(
+          (alias) =>
+            `${alias} BETWEEN '${startOfDay.toISOString()}' AND '${endOfDay.toISOString()}'`,
+        ),
+      },
+    });
+    const now = new Date();
+    const count = await this.extendRepository.count({
+      where: {
+        user: { id: userId },
+        expiredAt: MoreThan(now),
+      },
+    });
+    return { message: 3 + count, current: 3 + count - count_pengambilan };
   }
 }

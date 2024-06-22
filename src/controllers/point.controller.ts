@@ -31,7 +31,7 @@ export class PointController {
   @Get('extend')
   async getUserExtends(@Req() req): Promise<any> {
     const userId = req.user.id;
-    return await this.extendService.getUserExtends(userId);
+    return await this.extendService.countValidExtend(userId);
   }
 
   @UseGuards(AuthGuard)
