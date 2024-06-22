@@ -275,6 +275,7 @@ export class TransactionService {
       transaction.userDonor,
       confirmPengambilanDto.review,
     );
+    await this.pointService.tambahPoint(transaction.userRecipient, 2);
     if (transaction.userDonor.fcmToken) {
       const payload = {
         notification: {
@@ -296,7 +297,7 @@ export class TransactionService {
       const payloadPoint = {
         notification: {
           title: `Poin anda bertambah!`,
-          body: `Selamat anda  mendapatkan tambahan "${confirmPengambilanDto.review}" poin dari donasi yang telah Anda lakukan.`,
+          body: `Selamat anda  mendapatkan tambahan ${confirmPengambilanDto.review} poin dari donasi yang telah Anda lakukan.`,
         },
         data: {
           type: 'donation',
@@ -306,6 +307,34 @@ export class TransactionService {
       try {
         await this.firebaseAdminService.getMessaging().send(payload);
         await this.firebaseAdminService.getMessaging().send(payloadPoint);
+      } catch (error) {
+        if (
+          error.code === 'messaging/invalid-recipient' ||
+          error.code === 'messaging/registration-token-not-registered'
+        ) {
+          // Handle invalid token error
+          console.log('Invalid FCM token:', error.message);
+          return { success: false, error: 'Invalid FCM token' };
+        } else {
+          // Handle other errors
+          console.log('FCM send error:', error.message);
+          return { success: false, error: 'Failed to send notification' };
+        }
+      }
+    }
+    if (transaction.userRecipient.fcmToken) {
+      const payload = {
+        notification: {
+          title: `Poin anda bertambah!`,
+          body: `Selamat anda  mendapatkan tambahan 2 poin dari konfirmasi pengambilan donasi yang telah Anda lakukan.`,
+        },
+        data: {
+          type: 'donation',
+        },
+        token: transaction.userRecipient.fcmToken,
+      };
+      try {
+        await this.firebaseAdminService.getMessaging().send(payload);
       } catch (error) {
         if (
           error.code === 'messaging/invalid-recipient' ||
