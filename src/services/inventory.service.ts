@@ -10,6 +10,7 @@ import { toZonedTime } from 'date-fns-tz';
 import { id } from 'date-fns/locale/id';
 import * as fs from 'fs';
 import { ConfigService } from '@nestjs/config';
+import { NotificationService } from './notification.service';
 
 @Injectable()
 export class InventoryService {
@@ -20,6 +21,7 @@ export class InventoryService {
     private readonly userRepository: Repository<User>,
     private readonly firebaseService: FirebaseAdminService,
     private readonly configService: ConfigService,
+    private readonly notificationService: NotificationService,
   ) {}
 
   async createInventory(
@@ -78,7 +80,12 @@ export class InventoryService {
     for (const inventory of expiredInventories) {
       inventory.isNotify = true;
       await this.inventoryRepository.save(inventory);
-
+      await this.notificationService.createNotification(
+        inventory.user,
+        `${inventory.name} Anda telah kadaluwarsa!`,
+        `${inventory.name} telah kadaluwarsa pada ${formatExpiredAt(inventory.expiredAt)}`,
+        inventory.name,
+      );
       if (inventory.user.fcmToken) {
         const payload = {
           notification: {
@@ -117,35 +124,43 @@ export class InventoryService {
     for (const inventory of inventoriesExpiringSoon) {
       inventory.isPreNotify = true;
       await this.inventoryRepository.save(inventory);
+      const hoursUntilExpired = differenceInHours(
+        toDate(inventory.expiredAt),
+        nowZoned,
+      );
 
-      if (inventory.user.fcmToken) {
-        const hoursUntilExpired = differenceInHours(
-          toDate(inventory.expiredAt),
-          nowZoned,
+      if (hoursUntilExpired > 0) {
+        await this.notificationService.createNotification(
+          inventory.user,
+          `${inventory.name} Anda akan kadaluwarsa dalam ${hoursUntilExpired} jam!`,
+          `${inventory.name} akan kadaluwarsa pada ${formatExpiredAt(inventory.expiredAt)}`,
+          inventory.name,
         );
-        const payload = {
-          notification: {
-            title: `${inventory.name} Anda akan kadaluwarsa dalam ${hoursUntilExpired} jam!`,
-            body: `${inventory.name} akan kadaluwarsa pada ${formatExpiredAt(inventory.expiredAt)}`,
-          },
-          data: {
-            type: 'inventory',
-          },
-          token: inventory.user.fcmToken,
-        };
+        if (inventory.user.fcmToken) {
+          const payload = {
+            notification: {
+              title: `${inventory.name} Anda akan kadaluwarsa dalam ${hoursUntilExpired} jam!`,
+              body: `${inventory.name} akan kadaluwarsa pada ${formatExpiredAt(inventory.expiredAt)}`,
+            },
+            data: {
+              type: 'inventory',
+            },
+            token: inventory.user.fcmToken,
+          };
 
-        try {
-          await this.firebaseService.getMessaging().send(payload);
-        } catch (error) {
-          if (
-            error.code === 'messaging/invalid-recipient' ||
-            error.code === 'messaging/registration-token-not-registered'
-          ) {
-            console.log('Invalid FCM token:', error.message);
-            return { success: false, error: 'Invalid FCM token' };
-          } else {
-            console.log('FCM send error:', error.message);
-            return { success: false, error: 'Failed to send notification' };
+          try {
+            await this.firebaseService.getMessaging().send(payload);
+          } catch (error) {
+            if (
+              error.code === 'messaging/invalid-recipient' ||
+              error.code === 'messaging/registration-token-not-registered'
+            ) {
+              console.log('Invalid FCM token:', error.message);
+              return { success: false, error: 'Invalid FCM token' };
+            } else {
+              console.log('FCM send error:', error.message);
+              return { success: false, error: 'Failed to send notification' };
+            }
           }
         }
       }
