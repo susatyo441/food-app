@@ -84,14 +84,14 @@ import { InventoryController } from './controllers/inventory.controller';
     }),
     JwtModule.register({
       global: true,
-      secret: 'AEA9448136237662FAC22EE5212C8',
+      secret: process.env.JWT_SECRET || 'defaultSecret',
       signOptions: { expiresIn: '30d' },
     }),
     ServeStaticModule.forRoot({
       rootPath: join(__dirname, '..', 'public'),
     }),
     HttpModule.register({
-      baseURL: 'http://localhost:3000',
+      baseURL: process.env.BASE_URL || 'http://localhost:3000',
     }),
   ],
   providers: [
