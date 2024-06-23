@@ -1,6 +1,6 @@
 import { connectionSource } from '../../config/typeorm'; // Sesuaikan path jika diperlukan
-import { UserSeeder } from './user.seeder';
-import { CategorySeeder } from './category.seeder';
+import { UserSeeder } from './User.seeder';
+import { CategorySeeder } from './Category.seeder';
 import { PointSeeder } from './Point.seeder';
 
 async function run() {

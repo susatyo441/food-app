@@ -3,7 +3,7 @@ import { Module } from '@nestjs/common';
 import { JwtModule } from '@nestjs/jwt';
 import { TypeOrmModule } from '@nestjs/typeorm';
 import { ServeStaticModule } from '@nestjs/serve-static';
-import { HttpModule } from '@nestjs/axios';
+// import { HttpModule } from '@nestjs/axios';
 import { ConfigModule, ConfigService } from '@nestjs/config';
 import { join } from 'path';
 
@@ -90,9 +90,9 @@ import { InventoryController } from './controllers/inventory.controller';
     ServeStaticModule.forRoot({
       rootPath: join(__dirname, '..', 'public'),
     }),
-    HttpModule.register({
-      baseURL: process.env.BASE_URL || 'http://localhost:3000',
-    }),
+    // HttpModule.register({
+    //   baseURL: process.env.BASE_URL || 'http://localhost:3000',
+    // }),
   ],
   providers: [
     UserService,
