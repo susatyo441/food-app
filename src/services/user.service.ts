@@ -70,6 +70,6 @@ export class UserService {
     return this.userRepository.save(newUser);
   }
   async updateToken(userId: number, token: string | null): Promise<void> {
-    await this.userRepository.update(userId, { token });
+    await this.userRepository.update(userId, { token, fcmToken: null });
   }
 }
