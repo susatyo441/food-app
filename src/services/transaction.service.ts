@@ -575,6 +575,8 @@ export class TransactionService {
       variant: variantsWithJumlah,
       post_title: transaction.post.title,
       post_alamat: transaction.post.body.alamat,
+      post_coordinate: transaction.post.body.coordinate,
+      post_id: transaction.post.id,
     };
   }
 }
