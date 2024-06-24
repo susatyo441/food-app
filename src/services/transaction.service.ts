@@ -1,6 +1,6 @@
 import { Injectable, BadRequestException } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
-import { Raw, Repository } from 'typeorm';
+import { Between, Repository } from 'typeorm';
 import { Transaction } from '../entities/transactions.entity';
 import {
   ConfirmPengambilanDto,
@@ -131,10 +131,7 @@ export class TransactionService {
     const count_pengambilan = await this.transactionRepository.count({
       where: {
         userRecipient: { id: userId },
-        createdAt: Raw(
-          (alias) =>
-            `${alias} BETWEEN '${startOfDay.toISOString()}' AND '${endOfDay.toISOString()}'`,
-        ),
+        createdAt: Between(startOfDay, endOfDay),
       },
     });
 

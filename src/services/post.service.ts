@@ -5,7 +5,7 @@ import {
   NotFoundException,
   UnauthorizedException,
 } from '@nestjs/common';
-import { In, Like, Repository, Raw } from 'typeorm';
+import { In, Like, Repository, Raw, Between } from 'typeorm';
 import { Post } from '../entities/post.entity';
 import { CreatePostDto } from 'src/dto/post.dto';
 import { Variant } from 'src/entities/variant.entity';
@@ -566,10 +566,7 @@ export class PostService {
       await this.repositories.transactionRepository.count({
         where: {
           userRecipient: { id: userId },
-          createdAt: Raw(
-            (alias) =>
-              `${alias} BETWEEN '${startOfDay.toISOString()}' AND '${endOfDay.toISOString()}'`,
-          ),
+          createdAt: Between(startOfDay, endOfDay),
         },
       });
 

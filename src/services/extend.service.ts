@@ -4,10 +4,11 @@ import {
   BadRequestException,
 } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
-import { MoreThan, Raw, Repository } from 'typeorm';
+import { Between, MoreThan, Repository } from 'typeorm';
 import { Extend } from '../entities/extend.entity';
 import { Points } from '../entities/point.entity';
 import { User } from '../entities/user.entity';
+import * as moment from 'moment-timezone';
 import { Transaction } from 'src/entities/transactions.entity';
 
 @Injectable()
@@ -81,27 +82,27 @@ export class ExtendService {
   }
 
   async countValidExtend(userId: number): Promise<any> {
-    const startOfDay = new Date();
-    startOfDay.setHours(0, 0, 0, 0);
+    const jakartaTimezone = 'Asia/Jakarta';
 
-    const endOfDay = new Date();
-    endOfDay.setHours(23, 59, 59, 999);
+    const startOfDay = moment.tz(jakartaTimezone).startOf('day').toDate();
+    const endOfDay = moment.tz(jakartaTimezone).endOf('day').toDate();
+
     const count_pengambilan = await this.transactionRepository.count({
       where: {
         userRecipient: { id: userId },
-        createdAt: Raw(
-          (alias) =>
-            `${alias} BETWEEN '${startOfDay.toISOString()}' AND '${endOfDay.toISOString()}'`,
-        ),
+        createdAt: Between(startOfDay, endOfDay), // Menggunakan Between dari TypeORM
       },
     });
-    const now = new Date();
+
+    const nowJakarta = moment.tz(jakartaTimezone).toDate();
+
     const count = await this.extendRepository.count({
       where: {
         user: { id: userId },
-        expiredAt: MoreThan(now),
+        expiredAt: MoreThan(nowJakarta),
       },
     });
+
     return { message: 3 + count, current: 3 + count - count_pengambilan };
   }
 }
