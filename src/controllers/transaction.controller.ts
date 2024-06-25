@@ -73,6 +73,20 @@ export class TransactionController {
     return transactionDetail;
   }
 
+  @Get('recipient/:id')
+  async getTransactionDetailRecipient(@Param('id') id: number, @Req() req) {
+    const transactionDetail =
+      await this.transactionService.getTransactionDetailRecipient(
+        id,
+        req.user.id,
+      );
+    if (!transactionDetail) {
+      // Handle jika transaksi tidak ditemukan
+      throw new NotFoundException('Transaction not found');
+    }
+    return transactionDetail;
+  }
+
   @Get('reviews')
   async getReviewsByUserDonor(
     @Query('rating') rating?: number,

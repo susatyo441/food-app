@@ -577,6 +577,47 @@ export class TransactionService {
       post_alamat: transaction.post.body.alamat,
       post_coordinate: transaction.post.body.coordinate,
       post_id: transaction.post.id,
+      rating: transaction.detail.review,
+      comment: transaction.detail.comment,
+    };
+  }
+
+  async getTransactionDetailRecipient(id: number, userId: number) {
+    const userRecipient = await this.userRepository.findOne({
+      where: { id: userId },
+    });
+    const transaction = await this.transactionRepository.findOne({
+      where: { id, userRecipient },
+      relations: ['userDonor', 'post', 'post.variants'], // Load relasi yang diperlukan
+    });
+
+    if (!transaction) {
+      return null; // Transaksi tidak ditemukan
+    }
+
+    const variantsWithJumlah = transaction.post.variants
+      .filter((variant) => transaction.detail.variant_id.includes(variant.id)) // Filter varian berdasarkan variant_id
+      .map((variant) => ({
+        name: variant.name,
+        jumlah:
+          transaction.detail.jumlah[
+            transaction.detail.variant_id.indexOf(variant.id)
+          ],
+      }));
+
+    return {
+      transaction_id: transaction.id,
+      user_donor_id: transaction.userDonor.id,
+      user_donor_profile_picture: transaction.userDonor.profile_picture,
+      user_donor_name: transaction.userDonor.name,
+      transaction_timeline: transaction.timeline,
+      variant: variantsWithJumlah,
+      post_title: transaction.post.title,
+      post_alamat: transaction.post.body.alamat,
+      post_coordinate: transaction.post.body.coordinate,
+      rating: transaction.detail.review,
+      comment: transaction.detail.comment,
+      post_id: transaction.post.id,
     };
   }
 
