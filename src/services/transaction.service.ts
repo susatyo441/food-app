@@ -584,6 +584,9 @@ export class TransactionService {
     const transactions = await this.transactionRepository.find({
       where: { userDonor: { id: userId } },
       relations: ['userDonor', 'userRecipient', 'post', 'post.variants'],
+      order: {
+        createdAt: 'DESC',
+      },
     });
 
     const filteredTransactions = transactions.filter(
