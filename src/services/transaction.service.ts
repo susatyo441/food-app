@@ -590,7 +590,7 @@ export class TransactionService {
       (transaction) =>
         transaction.detail.review !== undefined &&
         transaction.detail.review !== null &&
-        (rating === undefined || transaction.detail.review === rating),
+        (rating === undefined || transaction.detail.review == rating),
     );
 
     return filteredTransactions.map((transaction) => ({
