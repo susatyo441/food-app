@@ -72,4 +72,22 @@ export class TransactionController {
     }
     return transactionDetail;
   }
+
+  @Get('reviews')
+  async getReviewsByUserDonor(
+    @Query('rating') rating?: number,
+    @Query('userId') userId?: number,
+  ) {
+    return this.transactionService.getReviewsByUserDonor(userId, rating);
+  }
+
+  @Get('review-counts')
+  async getReviewCountsByRating(@Query('userId') userId?: number) {
+    return this.transactionService.getReviewCountsByRating(userId);
+  }
+
+  @Get('ongoing')
+  async getOngoingTransactions(@Req() req) {
+    return this.transactionService.getOngoingTransactions(req.user.id);
+  }
 }

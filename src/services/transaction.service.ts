@@ -579,4 +579,114 @@ export class TransactionService {
       post_id: transaction.post.id,
     };
   }
+
+  async getReviewsByUserDonor(userId: number, rating?: number): Promise<any[]> {
+    const transactions = await this.transactionRepository.find({
+      where: { userDonor: { id: userId } },
+      relations: ['userDonor', 'userRecipient', 'post', 'post.variants'],
+    });
+
+    const filteredTransactions = transactions.filter(
+      (transaction) =>
+        transaction.detail.review !== undefined &&
+        transaction.detail.review !== null &&
+        (rating === undefined || transaction.detail.review === rating),
+    );
+
+    return filteredTransactions.map((transaction) => ({
+      userRecipientName: transaction.userRecipient.name,
+      userRecipientProfilePicture: transaction.userRecipient.profile_picture,
+      comment: transaction.detail.comment || '',
+      review: transaction.detail.review || 0,
+      createdAt: transaction.createdAt,
+      postTitle: transaction.post.title,
+      variants: transaction.detail.variant_id.map((variantId, index) => {
+        const variant = transaction.post.variants.find(
+          (v) => v.id === variantId,
+        );
+        return {
+          name: variant ? variant.name : 'Unknown',
+          jumlahAmbil: transaction.detail.jumlah[index],
+        };
+      }),
+    }));
+  }
+
+  async getReviewCountsByRating(userId: number): Promise<any> {
+    const transactions = await this.transactionRepository.find({
+      where: { userDonor: { id: userId } },
+      relations: ['userDonor', 'userRecipient', 'post', 'post.variants'],
+    });
+
+    const reviewCounts = [1, 2, 3, 4, 5].reduce((acc, rating) => {
+      acc[rating] = transactions.filter(
+        (transaction) => transaction.detail.review === rating,
+      ).length;
+      return acc;
+    }, {});
+
+    return reviewCounts;
+  }
+
+  async getOngoingTransactions(userId: number): Promise<any[]> {
+    const now = new Date().toISOString();
+
+    const donorTransactions = await this.transactionRepository
+      .createQueryBuilder('transaction')
+      .leftJoinAndSelect('transaction.userDonor', 'userDonor')
+      .leftJoinAndSelect('transaction.userRecipient', 'userRecipient')
+      .leftJoinAndSelect('transaction.post', 'post')
+      .where('transaction.userDonor.id = :userId', { userId })
+      .getMany();
+
+    const recipientTransactions = await this.transactionRepository
+      .createQueryBuilder('transaction')
+      .leftJoinAndSelect('transaction.userDonor', 'userDonor')
+      .leftJoinAndSelect('transaction.userRecipient', 'userRecipient')
+      .leftJoinAndSelect('transaction.post', 'post')
+      .where('transaction.userRecipient.id = :userId', { userId })
+      .getMany();
+
+    // Filter transactions based on `maks_pengambilan` and `pengambilan`
+    const filterTransactions = (transactions) => {
+      return transactions.filter((transaction) => {
+        const maksPengambilan = new Date(
+          transaction.detail.maks_pengambilan,
+        ).toISOString();
+        const pengambilan = transaction.timeline?.pengambilan;
+        return !pengambilan && maksPengambilan > now;
+      });
+    };
+
+    const filteredDonorTransactions = filterTransactions(donorTransactions);
+    const filteredRecipientTransactions = filterTransactions(
+      recipientTransactions,
+    );
+
+    const transactions = [
+      ...filteredDonorTransactions,
+      ...filteredRecipientTransactions,
+    ];
+
+    return transactions.map((transaction) => {
+      let role, user;
+
+      if (transaction.userDonor.id === userId) {
+        role = 'donor';
+        user = transaction.userRecipient;
+      } else {
+        role = 'recipient';
+        user = transaction.userDonor;
+      }
+
+      return {
+        transactionId: transaction.id,
+        postId: transaction.post.id,
+        postTitle: transaction.post.title,
+        userId: user.id,
+        userName: user.name,
+        role,
+      };
+    });
+  }
 }
