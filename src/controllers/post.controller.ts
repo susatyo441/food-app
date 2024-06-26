@@ -6,6 +6,7 @@ import {
   Body,
   Req,
   Get,
+  Patch,
   Query,
   UseGuards,
   Param,
@@ -104,6 +105,11 @@ export class PostController {
     return this.postService.findPostsByLocation(lat, lon, search);
   }
 
+  @Get('user')
+  async getUserPosts(@Req() request): Promise<any[]> {
+    return this.postService.getUserPost(request.user.id);
+  }
+
   @Get('find/:id')
   async findPostById(
     @Param('id') id: number,
@@ -132,5 +138,9 @@ export class PostController {
     const userId = req.user.id;
     const reporter = await this.userService.findById(userId);
     return this.postService.reportPost(id, reporter, reason, transactionId);
+  }
+  @Patch('hide/:id')
+  async hidePost(@Param('id') postId: number): Promise<void> {
+    await this.postService.hidePost(postId);
   }
 }

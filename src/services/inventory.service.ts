@@ -11,6 +11,7 @@ import { id } from 'date-fns/locale/id';
 import * as fs from 'fs';
 import { ConfigService } from '@nestjs/config';
 import { NotificationService } from './notification.service';
+import { Variant } from 'src/entities/variant.entity';
 
 @Injectable()
 export class InventoryService {
@@ -19,6 +20,8 @@ export class InventoryService {
     private readonly inventoryRepository: Repository<Inventory>,
     @InjectRepository(User)
     private readonly userRepository: Repository<User>,
+    @InjectRepository(Variant)
+    private variantRepository: Repository<Variant>,
     private readonly firebaseService: FirebaseAdminService,
     private readonly configService: ConfigService,
     private readonly notificationService: NotificationService,
@@ -216,5 +219,42 @@ export class InventoryService {
       },
       order: { createdAt: 'DESC' },
     });
+  }
+
+  async createInventoryFromPost(
+    userId: number,
+    detail: any,
+  ): Promise<Inventory[]> {
+    const inventories = [];
+
+    for (let i = 0; i < detail.variant_id.length; i++) {
+      const variantId = detail.variant_id[i];
+      const variant = await this.variantRepository.findOne({
+        where: { id: variantId },
+        relations: ['post', 'post.media'],
+      });
+
+      if (!variant) {
+        continue;
+      }
+
+      const mediaUrl =
+        variant.post.media && variant.post.media.length > 0
+          ? variant.post.media[0].url
+          : '';
+
+      const inventoryName = `${variant.post.title} ${variant.name}`;
+      const newInventory = this.inventoryRepository.create({
+        name: inventoryName,
+        quantity: detail.jumlah[i],
+        expiredAt: variant.expiredAt,
+        image: mediaUrl,
+        user: { id: userId },
+      });
+
+      inventories.push(newInventory);
+    }
+
+    return this.inventoryRepository.save(inventories);
   }
 }

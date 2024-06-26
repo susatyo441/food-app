@@ -209,11 +209,11 @@ export class TransactionService {
         ) {
           // Handle invalid token error
           console.log('Invalid FCM token:', error.message);
-          return { success: false, error: 'Invalid FCM token' };
+          return savedTransaction;
         } else {
           // Handle other errors
           console.log('FCM send error:', error.message);
-          return { success: false, error: 'Failed to send notification' };
+          return savedTransaction;
         }
       }
     }
@@ -311,11 +311,11 @@ export class TransactionService {
         ) {
           // Handle invalid token error
           console.log('Invalid FCM token:', error.message);
-          return { success: false, error: 'Invalid FCM token' };
+          return savedTransaction;
         } else {
           // Handle other errors
           console.log('FCM send error:', error.message);
-          return { success: false, error: 'Failed to send notification' };
+          return savedTransaction;
         }
       }
     }
@@ -339,11 +339,15 @@ export class TransactionService {
         ) {
           // Handle invalid token error
           console.log('Invalid FCM token:', error.message);
-          return { success: false, error: 'Invalid FCM token' };
+          return {
+            savedTransaction,
+          };
         } else {
           // Handle other errors
           console.log('FCM send error:', error.message);
-          return { success: false, error: 'Failed to send notification' };
+          return {
+            savedTransaction,
+          };
         }
       }
     }

@@ -124,4 +124,13 @@ export class InventoryController {
     const userId = req.user.id;
     return this.inventoryService.getValidInventories(userId);
   }
+
+  @Post('create')
+  async createInventoryFromPost(@Req() req, @Body() body: any): Promise<any> {
+    const userId = req.user.id; // Assuming user id is stored in the request
+    return await this.inventoryService.createInventoryFromPost(
+      userId,
+      body.detail,
+    );
+  }
 }

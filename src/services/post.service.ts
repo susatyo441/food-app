@@ -19,6 +19,7 @@ import { NotificationService } from './notification.service';
 import { User } from 'src/entities/user.entity';
 import { Transaction } from 'src/entities/transactions.entity';
 import { ExtendService } from './extend.service';
+import { ConfigService } from '@nestjs/config';
 
 @Injectable()
 export class PostService {
@@ -34,6 +35,7 @@ export class PostService {
     },
     private readonly notificationService: NotificationService,
     private extendService: ExtendService,
+    private readonly configService: ConfigService,
   ) {}
 
   private readonly maksimal_pengambilan = 3;
@@ -84,6 +86,27 @@ export class PostService {
 
   async findAll(): Promise<Post[]> {
     return await this.repositories.postRepository.find();
+  }
+
+  async getUserPost(userId: number): Promise<any[]> {
+    const posts = await this.repositories.postRepository.find({
+      where: {
+        user: { id: userId },
+        status: 'visible',
+      },
+      relations: ['variants', 'media'],
+      order: { createdAt: 'DESC' },
+    });
+    return posts.map((post) => ({
+      id: post.id,
+      title: post.title,
+      body: post.body,
+      createdAt: post.createdAt,
+      expiredAt: post.variants[0].expiredAt,
+      isReported: post.isReported,
+      stok: post.variants.reduce((total, variant) => total + variant.stok, 0),
+      media: post.media,
+    }));
   }
 
   async findPostsByLocation(
@@ -613,5 +636,18 @@ export class PostService {
       max_pengambilan: max_pengambilan,
       sisa_pengambilan: max_pengambilan - count_pengambilan,
     };
+  }
+
+  async hidePost(postId: number): Promise<void> {
+    const post = await this.repositories.postRepository.findOne({
+      where: { id: postId },
+    });
+
+    if (!post) {
+      throw new NotFoundException(`Post with id ${postId} not found`);
+    }
+
+    post.status = 'hidden';
+    await this.repositories.postRepository.save(post);
   }
 }
