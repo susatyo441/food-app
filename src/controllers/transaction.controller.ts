@@ -73,6 +73,18 @@ export class TransactionController {
     return transactionDetail;
   }
 
+  @Get('completed/:id')
+  async getCompletedTransactionDetail(
+    @Param('id') id: number,
+    @Req() req,
+  ): Promise<any> {
+    const userId = req.user.id; // Assuming user id is stored in request
+    return await this.transactionService.getCompletedTransactionDetail(
+      id,
+      userId,
+    );
+  }
+
   @Get('recipient/:id')
   async getTransactionDetailRecipient(@Param('id') id: number, @Req() req) {
     const transactionDetail =

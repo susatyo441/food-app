@@ -1,4 +1,8 @@
-import { Injectable, BadRequestException } from '@nestjs/common';
+import {
+  Injectable,
+  BadRequestException,
+  NotFoundException,
+} from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
 import { Between, Repository } from 'typeorm';
 import { Transaction } from '../entities/transactions.entity';
@@ -736,5 +740,65 @@ export class TransactionService {
         role,
       };
     });
+  }
+
+  async getCompletedTransactionDetail(
+    transactionId: number,
+    userId: number,
+  ): Promise<any> {
+    const now = new Date();
+
+    const transaction = await this.transactionRepository.findOne({
+      where: { id: transactionId },
+      relations: [
+        'userDonor',
+        'userRecipient',
+        'post',
+        'post.media',
+        'post.variants',
+      ],
+    });
+
+    if (!transaction) {
+      throw new NotFoundException('Transaction not found');
+    }
+
+    const status =
+      !transaction.timeline?.pengambilan &&
+      new Date(transaction.detail.maks_pengambilan) > now
+        ? 'ongoing'
+        : 'completed';
+
+    if (status !== 'completed') {
+      throw new NotFoundException('Transaction is not completed');
+    }
+
+    const isUserDonor = transaction.userDonor.id === userId;
+    const otherUser = isUserDonor
+      ? transaction.userRecipient
+      : transaction.userDonor;
+
+    return {
+      postTitle: transaction.post.title,
+      variants: transaction.detail.variant_id.map((variantId, index) => {
+        const variant = transaction.post.variants.find(
+          (v) => v.id === variantId,
+        );
+        return {
+          name: variant ? variant.name : 'Unknown',
+          jumlahAmbil: transaction.detail.jumlah[index],
+        };
+      }),
+      timeline: transaction.timeline,
+      review: transaction.detail.review || null,
+      comment: transaction.detail.comment || '',
+      userName: otherUser.name,
+      userId: otherUser.id,
+      userProfilePicture: otherUser.profile_picture,
+      postMedia: transaction.post.media.map((media) => ({
+        id: media.id,
+        url: media.url,
+      })),
+    };
   }
 }

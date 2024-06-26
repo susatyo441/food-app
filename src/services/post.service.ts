@@ -20,6 +20,7 @@ import { User } from 'src/entities/user.entity';
 import { Transaction } from 'src/entities/transactions.entity';
 import { ExtendService } from './extend.service';
 import { ConfigService } from '@nestjs/config';
+import { roundToOneDecimal } from 'src/utils/rounding';
 
 @Injectable()
 export class PostService {
@@ -156,8 +157,9 @@ export class PostService {
     }, {});
 
     for (const userId in userReviewMap) {
-      userReviewMap[userId].averageReview =
-        userReviewMap[userId].totalReview / userReviewMap[userId].count;
+      userReviewMap[userId].averageReview = roundToOneDecimal(
+        userReviewMap[userId].totalReview / userReviewMap[userId].count,
+      );
     }
 
     // Filter out posts with expired variants or where all variants are out of stock
@@ -296,8 +298,9 @@ export class PostService {
     }, {});
 
     for (const userId in userReviewMap) {
-      userReviewMap[userId].averageReview =
-        userReviewMap[userId].totalReview / userReviewMap[userId].count;
+      userReviewMap[userId].averageReview = roundToOneDecimal(
+        userReviewMap[userId].totalReview / userReviewMap[userId].count,
+      );
     }
 
     // Filter out posts with expired variants or where all variants are out of stock
@@ -537,8 +540,10 @@ export class PostService {
     }, {});
 
     const averageReview = userReviewMap[userIdDonor]
-      ? userReviewMap[userIdDonor].totalReview /
-        userReviewMap[userIdDonor].count
+      ? roundToOneDecimal(
+          userReviewMap[userIdDonor].totalReview /
+            userReviewMap[userIdDonor].count,
+        )
       : null;
 
     const reviewCount = userReviewMap[userIdDonor]?.reviewCount || 0;
