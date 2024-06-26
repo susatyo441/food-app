@@ -8,7 +8,6 @@ import { Cron, CronExpression } from '@nestjs/schedule';
 import { differenceInHours, format, subHours, toDate } from 'date-fns';
 import { toZonedTime } from 'date-fns-tz';
 import { id } from 'date-fns/locale/id';
-import * as fs from 'fs';
 import { ConfigService } from '@nestjs/config';
 import { NotificationService } from './notification.service';
 import { Variant } from 'src/entities/variant.entity';
@@ -184,15 +183,7 @@ export class InventoryService {
 
   async deleteInventory(userId: number, id: number): Promise<void> {
     const inventory = await this.findInventoryById(userId, id);
-    if (inventory.image) {
-      const filePath = inventory.image.replace(
-        `${this.configService.get<string>('URL')}/`,
-        'public/',
-      );
-      if (fs.existsSync(filePath)) {
-        fs.unlinkSync(filePath); // Delete the file
-      }
-    }
+
     await this.inventoryRepository.remove(inventory);
   }
 
