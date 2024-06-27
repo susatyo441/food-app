@@ -332,20 +332,10 @@ export class PostService {
           title: post.title,
           body: post.body,
           status: post.status,
-          createdAt: `Diposting ${formatDistanceToNow(
-            new Date(post.createdAt),
-            {
-              locale: id,
-            },
-          )} yang lalu`,
-          updatedAt: `Diupdate ${formatDistanceToNow(new Date(post.updatedAt), {
-            locale: id,
-          })} yang lalu`,
+          createdAt: `Diposting ${formatDistanceToNow(new Date(post.createdAt), { locale: id })} yang lalu`,
+          updatedAt: `Diupdate ${formatDistanceToNow(new Date(post.updatedAt), { locale: id })} yang lalu`,
           firstVariantExpiredAt: post.variants[0]
-            ? `Kadaluwarsa dalam ${formatDistanceToNow(
-                new Date(post.variants[0].expiredAt),
-                { locale: id },
-              )}`
+            ? `Kadaluwarsa dalam ${formatDistanceToNow(new Date(post.variants[0].expiredAt), { locale: id })}`
             : 'Tidak tersedia',
           distance: distanceText,
           stok: post.variants.reduce(
@@ -364,7 +354,10 @@ export class PostService {
       .filter((post) => post.distanceValue <= 10000); // Filter out posts beyond 10 km
 
     // Sort posts by distance
-    postsWithDistance.sort((a, b) => a.distanceValue - b.distanceValue);
+    postsWithDistance.sort(
+      (a, b) =>
+        new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime(),
+    );
 
     return postsWithDistance.map((post) => ({
       id: post.id,
