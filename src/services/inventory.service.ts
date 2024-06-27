@@ -233,8 +233,13 @@ export class InventoryService {
         variant.post.media && variant.post.media.length > 0
           ? variant.post.media[0].url
           : '';
+      let inventoryName = '';
+      if (variant.post.title == variant.name) {
+        inventoryName = variant.name;
+      } else {
+        inventoryName = `${variant.post.title} ${variant.name}`;
+      }
 
-      const inventoryName = `${variant.post.title} ${variant.name}`;
       const newInventory = this.inventoryRepository.create({
         name: inventoryName,
         quantity: detail.jumlah[i],
