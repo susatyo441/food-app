@@ -38,11 +38,8 @@ export class CreatePostDto {
   @ArrayMaxSize(5)
   variants: Variant[];
 
-  @IsArray()
-  @ArrayNotEmpty()
-  @ArrayMinSize(1)
-  @ArrayMaxSize(3)
-  categories: number[];
+  @IsNotEmpty()
+  categories: number;
 }
 
 export class Variant {

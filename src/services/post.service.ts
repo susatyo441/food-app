@@ -43,7 +43,7 @@ export class PostService {
   async create(
     postData: CreatePostDto,
     userId: number,
-    categories: Category[],
+    category: Category,
     urlPhotos: string[],
   ): Promise<Post> {
     // Buat objek Post
@@ -55,13 +55,11 @@ export class PostService {
     // Simpan objek Post ke dalam database
     const savedPost = await this.repositories.postRepository.save(post);
 
-    for (const category of categories) {
-      const categoryPost = this.repositories.categoryPostRepository.create({
-        post: savedPost,
-        category: category,
-      });
-      await this.repositories.categoryPostRepository.save(categoryPost);
-    }
+    const categoryPost = this.repositories.categoryPostRepository.create({
+      post: savedPost,
+      category: category,
+    });
+    await this.repositories.categoryPostRepository.save(categoryPost);
 
     for (const variantData of postData.variants) {
       const variant = this.repositories.variantRepository.create({
