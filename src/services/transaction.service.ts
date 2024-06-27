@@ -794,6 +794,7 @@ export class TransactionService {
       comment: transaction.detail.comment || '',
       userName: otherUser.name,
       userId: otherUser.id,
+      role: isUserDonor ? 'Donatur' : 'Penerima',
       userProfilePicture: otherUser.profile_picture,
       postMedia: transaction.post.media.map((media) => ({
         id: media.id,
