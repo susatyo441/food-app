@@ -6,7 +6,6 @@ import { User } from '../entities/user.entity';
 import { FirebaseAdminService } from './firebase-admin.service';
 import { Cron, CronExpression } from '@nestjs/schedule';
 import { differenceInHours, format, subHours, toDate } from 'date-fns';
-import { toZonedTime } from 'date-fns-tz';
 import { id } from 'date-fns/locale/id';
 import { ConfigService } from '@nestjs/config';
 import { NotificationService } from './notification.service';
@@ -64,14 +63,13 @@ export class InventoryService {
   })
   async checkExpiredInventory() {
     const formatExpiredAt = (date: Date | string) => {
-      const timeZone = 'Asia/Jakarta';
-      const zonedDate = toZonedTime(date, timeZone);
-      return format(zonedDate, 'EEEE, dd MMMM yyyy HH:mm:ss', { locale: id });
+      return format(toDate(date), 'EEEE, dd MMMM yyyy HH:mm:ss', {
+        locale: id,
+      });
     };
 
     const now = new Date();
-    const nowZoned = toZonedTime(now, 'Asia/Jakarta');
-    const eightHoursBeforeNow = subHours(nowZoned, -8);
+    const eightHoursBeforeNow = subHours(now, -8);
 
     // Check for expired inventories
     const expiredInventories = await this.inventoryRepository.find({
@@ -108,10 +106,8 @@ export class InventoryService {
             error.code === 'messaging/registration-token-not-registered'
           ) {
             console.log('Invalid FCM token:', error.message);
-            return { success: false, error: 'Invalid FCM token' };
           } else {
             console.log('FCM send error:', error.message);
-            return { success: false, error: 'Failed to send notification' };
           }
         }
       }
@@ -128,7 +124,7 @@ export class InventoryService {
       await this.inventoryRepository.save(inventory);
       const hoursUntilExpired = differenceInHours(
         toDate(inventory.expiredAt),
-        nowZoned,
+        now,
       );
 
       if (hoursUntilExpired > 0) {
@@ -158,10 +154,8 @@ export class InventoryService {
               error.code === 'messaging/registration-token-not-registered'
             ) {
               console.log('Invalid FCM token:', error.message);
-              return { success: false, error: 'Invalid FCM token' };
             } else {
               console.log('FCM send error:', error.message);
-              return { success: false, error: 'Failed to send notification' };
             }
           }
         }
