@@ -75,7 +75,7 @@ export class InventoryService {
 
     // Check for expired inventories
     const expiredInventories = await this.inventoryRepository.find({
-      where: { expiredAt: LessThan(now), isNotify: false },
+      where: { expiredAt: LessThan(nowZoned), isNotify: false },
       relations: ['user'],
     });
 
@@ -189,8 +189,9 @@ export class InventoryService {
 
   async getExpiredInventories(userId: number): Promise<Inventory[]> {
     const now = new Date();
+    const nowZoned = toZonedTime(now, 'Asia/Jakarta');
     return this.inventoryRepository.find({
-      where: { user: { id: userId }, expiredAt: LessThan(now) },
+      where: { user: { id: userId }, expiredAt: LessThan(nowZoned) },
     });
   }
 
