@@ -5,7 +5,7 @@ import {
   NotFoundException,
   UnauthorizedException,
 } from '@nestjs/common';
-import { toZonedTime } from 'date-fns-tz';
+import { fromZonedTime, toZonedTime } from 'date-fns-tz';
 import { In, Like, Repository, Raw, Between } from 'typeorm';
 import { Post } from '../entities/post.entity';
 import { CreatePostDto } from 'src/dto/post.dto';
@@ -14,7 +14,7 @@ import { CategoryPost } from 'src/entities/category-post.entity';
 import { Category } from 'src/entities/category.entity';
 import { PostMedia } from 'src/entities/post-media.entity';
 import * as geolib from 'geolib';
-import { formatDistanceToNow } from 'date-fns';
+import { formatDistanceToNow, toDate } from 'date-fns';
 import { id } from 'date-fns/locale';
 import { NotificationService } from './notification.service';
 import { User } from 'src/entities/user.entity';
@@ -204,7 +204,10 @@ export class PostService {
           })} yang lalu`,
           firstVariantExpiredAt: post.variants[0]
             ? `Kadaluwarsa dalam ${formatDistanceToNow(
-                toZonedTime(post.variants[0].expiredAt, 'Asia/Jakarta'),
+                fromZonedTime(
+                  toDate(post.variants[0].expiredAt),
+                  'Asia/Jakarta',
+                ),
                 { locale: id },
               )}`
             : 'Tidak tersedia',
@@ -338,7 +341,10 @@ export class PostService {
           updatedAt: `Diupdate ${formatDistanceToNow(new Date(post.updatedAt), { locale: id })} yang lalu`,
           firstVariantExpiredAt: post.variants[0]
             ? `Kadaluwarsa dalam ${formatDistanceToNow(
-                toZonedTime(post.variants[0].expiredAt, 'Asia/Jakarta'),
+                fromZonedTime(
+                  toDate(post.variants[0].expiredAt),
+                  'Asia/Jakarta',
+                ),
                 { locale: id },
               )}`
             : 'Tidak tersedia',
@@ -605,7 +611,7 @@ export class PostService {
       })} yang lalu`,
       expiredAt: post.variants[0]
         ? `Kadaluwarsa dalam ${formatDistanceToNow(
-            toZonedTime(post.variants[0].expiredAt, 'Asia/Jakarta'),
+            fromZonedTime(toDate(post.variants[0].expiredAt), 'Asia/Jakarta'),
             { locale: id },
           )}`
         : 'Tidak tersedia',
