@@ -5,6 +5,7 @@ import {
   NotFoundException,
   UnauthorizedException,
 } from '@nestjs/common';
+import { toZonedTime } from 'date-fns-tz';
 import { In, Like, Repository, Raw, Between } from 'typeorm';
 import { Post } from '../entities/post.entity';
 import { CreatePostDto } from 'src/dto/post.dto';
@@ -114,6 +115,7 @@ export class PostService {
     search?: string,
   ): Promise<any[]> {
     const now = new Date();
+    const nowZoned = toZonedTime(now, 'Asia/Jakarta');
 
     // Get all posts with status 'visible'
     const posts = await this.repositories.postRepository.find({
@@ -165,7 +167,7 @@ export class PostService {
       const variantsAvailable = post.variants.some(
         (variant) =>
           variant.stok > 0 &&
-          (!variant.expiredAt || new Date(variant.expiredAt) > now),
+          (!variant.expiredAt || new Date(variant.expiredAt) > nowZoned),
       );
       return variantsAvailable;
     });
@@ -202,7 +204,7 @@ export class PostService {
           })} yang lalu`,
           firstVariantExpiredAt: post.variants[0]
             ? `Kadaluwarsa dalam ${formatDistanceToNow(
-                new Date(post.variants[0].expiredAt),
+                toZonedTime(post.variants[0].expiredAt, 'Asia/Jakarta'),
                 { locale: id },
               )}`
             : 'Tidak tersedia',
@@ -255,7 +257,7 @@ export class PostService {
 
   async findRecentPosts(lat: number, lon: number): Promise<any[]> {
     const now = new Date();
-
+    const nowZoned = toZonedTime(now, 'Asia/Jakarta');
     // Get all posts with status 'visible'
     const posts = await this.repositories.postRepository.find({
       where: {
@@ -306,7 +308,7 @@ export class PostService {
       const variantsAvailable = post.variants.some(
         (variant) =>
           variant.stok > 0 &&
-          (!variant.expiredAt || new Date(variant.expiredAt) > now),
+          (!variant.expiredAt || new Date(variant.expiredAt) > nowZoned),
       );
       return variantsAvailable;
     });
@@ -335,7 +337,10 @@ export class PostService {
           createdAt: `Diposting ${formatDistanceToNow(new Date(post.createdAt), { locale: id })} yang lalu`,
           updatedAt: `Diupdate ${formatDistanceToNow(new Date(post.updatedAt), { locale: id })} yang lalu`,
           firstVariantExpiredAt: post.variants[0]
-            ? `Kadaluwarsa dalam ${formatDistanceToNow(new Date(post.variants[0].expiredAt), { locale: id })}`
+            ? `Kadaluwarsa dalam ${formatDistanceToNow(
+                toZonedTime(post.variants[0].expiredAt, 'Asia/Jakarta'),
+                { locale: id },
+              )}`
             : 'Tidak tersedia',
           distance: distanceText,
           stok: post.variants.reduce(
@@ -484,7 +489,6 @@ export class PostService {
     userId: number,
   ): Promise<any> {
     const now = new Date();
-
     // Get the post by ID with its relations
     const post = await this.repositories.postRepository.findOne({
       where: { id: idPost, isReported: false },
@@ -601,7 +605,7 @@ export class PostService {
       })} yang lalu`,
       expiredAt: post.variants[0]
         ? `Kadaluwarsa dalam ${formatDistanceToNow(
-            new Date(post.variants[0].expiredAt),
+            toZonedTime(post.variants[0].expiredAt, 'Asia/Jakarta'),
             { locale: id },
           )}`
         : 'Tidak tersedia',

@@ -19,6 +19,7 @@ import { User } from 'src/entities/user.entity';
 import { FirebaseAdminService } from './firebase-admin.service';
 import { ExtendService } from './extend.service';
 import { PointService } from './point.service';
+import { toZonedTime } from 'date-fns-tz';
 
 @Injectable()
 export class TransactionService {
@@ -43,7 +44,7 @@ export class TransactionService {
     userId: number,
   ): Promise<any> {
     const now = new Date();
-
+    const nowZoned = toZonedTime(now, 'Asia/Jakarta');
     // Check if the user has an ongoing transaction
     const transactions = await this.transactionRepository.find({
       where: {
@@ -93,7 +94,7 @@ export class TransactionService {
           `Variant with id ${variantDetail.variant_id} not found in the specified post`,
         );
       }
-      if (variant.expiredAt && new Date(variant.expiredAt) < now) {
+      if (variant.expiredAt && new Date(variant.expiredAt) < nowZoned) {
         throw new BadRequestException(
           `Variant with id ${variantDetail.variant_id} has expired and cannot be used for transactions`,
         );
@@ -110,7 +111,9 @@ export class TransactionService {
     const twoHoursFromNow = new Date(now.getTime() + 2 * 60 * 60 * 1000);
     const maks_pengambilan = variants.reduce((latest, { variant }) => {
       const variantMaks =
-        variant.expiredAt && new Date(variant.expiredAt) < twoHoursFromNow
+        variant.expiredAt &&
+        new Date(variant.expiredAt) <
+          toZonedTime(twoHoursFromNow, 'Asia/Jakarta')
           ? new Date(variant.expiredAt).toISOString()
           : twoHoursFromNow.toISOString();
       return latest < variantMaks ? latest : variantMaks;
