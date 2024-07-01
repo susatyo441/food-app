@@ -84,4 +84,10 @@ export class PostRequestService {
       throw new NotFoundException(`Post request with ID ${id} not found`);
     }
   }
+
+  async getAllPostsByUser(userId: number): Promise<PostRequest[]> {
+    return await this.postRequestRepository.find({
+      where: { userOrganization: { id: userId } },
+    });
+  }
 }

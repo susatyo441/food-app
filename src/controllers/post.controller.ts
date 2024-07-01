@@ -170,10 +170,31 @@ export class PostController {
     return this.postRequestService.getPostsSortedByLocation(lat, long);
   }
 
-  @Delete(':id')
+  @UseGuards(JwtAuthGuard)
+  @Delete('delete-request/:id')
   async deletePostRequest(
     @Param('id', ParseIntPipe) id: number,
   ): Promise<void> {
     return this.postRequestService.deletePostRequest(id);
+  }
+
+  @UseGuards(JwtAuthGuard)
+  @Get('user')
+  async getAllPostsByUser(@Req() req): Promise<any> {
+    const userId = req.user.id; // Assuming user id is stored in request
+    const posts = await this.postRequestService.getAllPostsByUser(userId);
+
+    return posts.map((post) => ({
+      id: post.id,
+      request: post.request,
+      createdAt: post.createdAt,
+      user: {
+        id: post.userOrganization.id,
+        name: post.userOrganization.name,
+        profilePicture: post.userOrganization.profile_picture,
+        address: post.userOrganization.address,
+        email: post.userOrganization.email,
+      },
+    }));
   }
 }
