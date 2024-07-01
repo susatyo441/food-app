@@ -88,6 +88,7 @@ export class PostRequestService {
   async getAllPostsByUser(userId: number): Promise<PostRequest[]> {
     return await this.postRequestRepository.find({
       where: { userOrganization: { id: userId } },
+      relations: ['userOrganization'],
     });
   }
 }
