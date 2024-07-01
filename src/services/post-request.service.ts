@@ -1,4 +1,4 @@
-import { Injectable } from '@nestjs/common';
+import { Injectable, NotFoundException } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
 import { Repository } from 'typeorm';
 import { PostRequest } from '../entities/post-request.entity';
@@ -74,5 +74,12 @@ export class PostRequestService {
     });
 
     return formattedPosts;
+  }
+
+  async deletePostRequest(id: number): Promise<void> {
+    const result = await this.postRequestRepository.delete(id);
+    if (result.affected === 0) {
+      throw new NotFoundException(`Post request with ID ${id} not found`);
+    }
   }
 }

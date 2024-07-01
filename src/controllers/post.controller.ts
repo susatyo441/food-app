@@ -10,7 +10,9 @@ import {
   Query,
   UseGuards,
   Param,
+  Delete,
   BadRequestException,
+  ParseIntPipe,
 } from '@nestjs/common';
 import { FilesInterceptor } from '@nestjs/platform-express';
 import { Post as PostEntity } from '../entities/post.entity';
@@ -166,5 +168,12 @@ export class PostController {
     @Query('long') long: number,
   ) {
     return this.postRequestService.getPostsSortedByLocation(lat, long);
+  }
+
+  @Delete(':id')
+  async deletePostRequest(
+    @Param('id', ParseIntPipe) id: number,
+  ): Promise<void> {
+    return this.postRequestService.deletePostRequest(id);
   }
 }
