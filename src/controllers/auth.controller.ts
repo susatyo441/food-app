@@ -20,6 +20,8 @@ import { ConfigService } from '@nestjs/config';
 import { diskStorage } from 'multer';
 import { v4 as uuidv4 } from 'uuid';
 import { FileInterceptor } from '@nestjs/platform-express';
+import { RegisterOrganizationDto } from 'src/dto/organization.dto';
+import { UserOrganization } from 'src/entities/user-organization.entity';
 
 @Controller('auth')
 export class AuthController {
@@ -81,6 +83,51 @@ export class AuthController {
     const userId = request.user.id;
     await this.authService.logout(userId);
     return { message: 'Logged out successfully' };
+  }
+
+  @Post('register-organization')
+  @UseInterceptors(
+    FileInterceptor('profile_picture', {
+      storage: diskStorage({
+        destination: (req, file, cb) => {
+          const dest = 'public/organization';
+          if (!fs.existsSync(dest)) {
+            fs.mkdirSync(dest, { recursive: true });
+          }
+          cb(null, dest);
+        },
+        filename: (req, file, cb) => {
+          const uniqueSuffix = uuidv4();
+          let fileExtension = mime.extension(file.mimetype);
+          if (fileExtension === 'bin') {
+            fileExtension = 'jpeg'; // Rename bin to jpeg
+          }
+          const randomFilename = `${uniqueSuffix}.${fileExtension}`;
+          cb(null, randomFilename);
+        },
+      }),
+    }),
+  )
+  async register_organization(
+    @UploadedFile() profile_picture: Express.Multer.File,
+    @Body() registerDto: RegisterOrganizationDto, // Use your DTO
+  ): Promise<UserOrganization> {
+    if (!profile_picture) {
+      throw new BadRequestException('Profile picture is required');
+    }
+
+    const url = this.configService.get<string>('URL');
+    const mediaUrl = `${url}/${profile_picture.path
+      .replace(/\\/g, '/')
+      .replace('public/', '')}`;
+
+    return this.authService.register_organization(registerDto, mediaUrl);
+  }
+
+  @Post('login-organization')
+  async login_organization(@Body() body: any) {
+    const { email, password } = body;
+    return this.authService.login_organization(email, password);
   }
 
   private async saveFilesToStorage(

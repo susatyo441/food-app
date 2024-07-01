@@ -52,6 +52,10 @@ import { ScheduleModule } from '@nestjs/schedule';
 import { InventoryService } from './services/inventory.service';
 import { Inventory } from './entities/inventory.entity';
 import { InventoryController } from './controllers/inventory.controller';
+import { JwtAuthGuard } from './guard/organization.guard';
+import { PostRequestService } from './services/post-request.service';
+import { PostRequest } from './entities/post-request.entity';
+import { UserOrganization } from './entities/user-organization.entity';
 
 @Module({
   imports: [
@@ -71,6 +75,8 @@ import { InventoryController } from './controllers/inventory.controller';
       Points,
       Recipe,
       Inventory,
+      PostRequest,
+      UserOrganization,
     ]),
     ScheduleModule.forRoot(),
     ConfigModule.forRoot({
@@ -109,6 +115,8 @@ import { InventoryController } from './controllers/inventory.controller';
     PointService,
     RecipeService,
     InventoryService,
+    JwtAuthGuard,
+    PostRequestService,
     ...postProviders,
   ],
   controllers: [

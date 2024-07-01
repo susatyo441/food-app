@@ -24,17 +24,20 @@ import { diskStorage } from 'multer';
 import { v4 as uuidv4 } from 'uuid';
 import { UserService } from 'src/services/user.service';
 import * as fs from 'fs';
+import { JwtAuthGuard } from 'src/guard/organization.guard';
+import { PostRequestService } from 'src/services/post-request.service';
 
 @Controller('post')
-@UseGuards(AuthGuard)
 export class PostController {
   constructor(
     private readonly postService: PostService,
     private readonly categoryService: CategoryService,
     private readonly configService: ConfigService,
     private readonly userService: UserService,
+    private readonly postRequestService: PostRequestService,
   ) {}
 
+  @UseGuards(AuthGuard)
   @Post('create')
   @UseInterceptors(
     FilesInterceptor('images', 5, {
@@ -96,6 +99,7 @@ export class PostController {
     return fileUrls;
   }
 
+  @UseGuards(AuthGuard)
   @Get()
   async getNearbyPosts(
     @Query('lat') lat: number,
@@ -105,11 +109,13 @@ export class PostController {
     return this.postService.findPostsByLocation(lat, lon, search);
   }
 
+  @UseGuards(AuthGuard)
   @Get('user')
   async getUserPosts(@Req() request): Promise<any[]> {
     return this.postService.getUserPost(request.user.id);
   }
 
+  @UseGuards(AuthGuard)
   @Get('find/:id')
   async findPostById(
     @Param('id') id: number,
@@ -121,6 +127,7 @@ export class PostController {
     return this.postService.findPostById(id, lat, lon, userId);
   }
 
+  @UseGuards(AuthGuard)
   @Get('recent')
   async getRecentPosts(
     @Query('lat') lat: number,
@@ -128,6 +135,8 @@ export class PostController {
   ): Promise<any[]> {
     return this.postService.findRecentPosts(lat, lon);
   }
+
+  @UseGuards(AuthGuard)
   @Post('report/:id')
   async reportPost(
     @Param('id') id: number,
@@ -142,5 +151,20 @@ export class PostController {
   @Patch('hide/:id')
   async hidePost(@Param('id') postId: number): Promise<void> {
     await this.postService.hidePost(postId);
+  }
+
+  @UseGuards(JwtAuthGuard)
+  @Post('request')
+  async createPostRequest(@Req() req, @Body('request') request: string) {
+    const userId = req.user.sub;
+    return this.postRequestService.createPostRequest(userId, request);
+  }
+
+  @Get('request')
+  async getPostsSortedByLocation(
+    @Query('lat') lat: number,
+    @Query('long') long: number,
+  ) {
+    return this.postRequestService.getPostsSortedByLocation(lat, long);
   }
 }
