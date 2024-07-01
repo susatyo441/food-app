@@ -179,7 +179,7 @@ export class PostController {
   }
 
   @UseGuards(JwtAuthGuard)
-  @Get('user')
+  @Get('user-org')
   async getAllPostsByUser(@Req() req): Promise<any> {
     const userId = req.user.id; // Assuming user id is stored in request
     const posts = await this.postRequestService.getAllPostsByUser(userId);
