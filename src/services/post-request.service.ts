@@ -51,6 +51,8 @@ export class PostRequestService {
           profilePicture: post.userOrganization.profile_picture,
           address: post.userOrganization.address,
           email: post.userOrganization.email,
+          lat: post.userOrganization.lat,
+          long: post.userOrganization.long,
         },
       };
     });
